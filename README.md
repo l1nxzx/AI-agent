@@ -106,7 +106,7 @@ emitted when explicitly allowed, so dataset text can never inject them.
 * Chat source: `HuggingFaceTB/smoltalk`, subset `everyday-conversations` (parquet, column `messages`, a list
   of `{role, content}` with roles `user` and `assistant`).
 
-Three chat modes (`prepare_data --chat_mode`):
+Four chat modes (`prepare_data --chat_mode`):
 
 * `persona` (default): a small model cannot answer open questions, and trained on broad chat it invents
   confident nonsense. So the chat data is a hand-written persona bank (`persona.py`): a very small,
@@ -122,6 +122,8 @@ Three chat modes (`prepare_data --chat_mode`):
   everyday-conversations. Text is cleaned (pre-tokenized spacing, curly quotes). Check the DailyDialog
   license before reuse; I believe it is non-commercial. In a short CPU test the replies were fluent,
   short and human-sounding but mostly off-topic; a 2M model cannot hold a real conversation.
+* `dailydialog_only`: DailyDialog alone. The two datasets above have different voices (an LLM-written helpful
+  assistant vs. two people chatting), which gave inconsistent replies, so this keeps a single style.
 * `real`: the everyday-conversations data as published.
 
 In both modes the chat loss is computed on the bot's words only (`train.chat_loss = "bot_only"`).

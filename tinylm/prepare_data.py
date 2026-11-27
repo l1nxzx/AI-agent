@@ -32,10 +32,11 @@ def main(argv=None):
     p.add_argument("--max_stories", type=int, default=300_000, help="cap on training stories encoded")
     p.add_argument("--max_val_stories", type=int, default=3000)
     p.add_argument("--tokenizer_stories", type=int, default=30_000, help="stories used to train the tokenizer (chat text is always included)")
-    p.add_argument("--chat_mode", choices=["persona", "real", "dailydialog"], default="persona",
+    p.add_argument("--chat_mode", choices=["persona", "real", "dailydialog", "dailydialog_only"], default="persona",
                    help="persona: hand-written consistent bot voice (+ real stories and real user questions); "
                         "real: the everyday-conversations data as published; "
-                        "dailydialog: real human dialogues (DailyDialog) plus everyday-conversations, no authored text")
+                        "dailydialog: real human dialogues (DailyDialog) plus everyday-conversations, no authored text; "
+                        "dailydialog_only: DailyDialog alone (one consistent style)")
     p.add_argument("--persona_train", type=int, default=30_000, help="persona conversations for training")
     p.add_argument("--persona_val", type=int, default=600)
     p.add_argument("--seed", type=int, default=0)
@@ -57,7 +58,7 @@ def main(argv=None):
 
     cache = args.cache_dir or os.path.join(args.data_dir, "hf_cache")
     files = check_and_locate_files(smoke=args.smoke, num_story_shards=args.story_shards,
-                                   dailydialog=args.chat_mode == "dailydialog")
+                                   dailydialog=args.chat_mode in ("dailydialog", "dailydialog_only"))
 
     chat_train = read_conversations(download(SMOLTALK_REPO, files["chat_train"], cache))
     chat_val = read_conversations(download(SMOLTALK_REPO, files["chat_test"], cache))
@@ -76,12 +77,15 @@ def main(argv=None):
         story_val = valid_texts[:args.max_val_stories]
     log.info(f"stories: {len(story_train)} train, {len(story_val)} val; conversations: {len(chat_train)} train, {len(chat_val)} val")
 
-    if args.chat_mode == "dailydialog":
-        log.info("chat_mode=dailydialog: chat data is entirely real, human-written dialogue (no authored replies)")
+    if args.chat_mode in ("dailydialog", "dailydialog_only"):
+        log.info(f"chat_mode={args.chat_mode}: chat data is entirely real, human-written dialogue (no authored replies)")
         dd_train = read_dailydialog(download(DAILYDIALOG_REPO, files["dd_train"], cache, DAILYDIALOG_REVISION))
         dd_val = read_dailydialog(download(DAILYDIALOG_REPO, files["dd_val"], cache, DAILYDIALOG_REVISION), both_ways=False)
-        chat_train, chat_val = dd_train + chat_train, dd_val + chat_val
-        log.info(f"chat: {len(chat_train)} train and {len(chat_val)} val dialogues (DailyDialog + everyday-conversations)")
+        if args.chat_mode == "dailydialog_only":
+            chat_train, chat_val = dd_train, dd_val
+        else:
+            chat_train, chat_val = dd_train + chat_train, dd_val + chat_val
+        log.info(f"chat: {len(chat_train)} train and {len(chat_val)} val dialogues ({args.chat_mode})")
         for conv in chat_train[:3]:
             log.info("dialogue example:\n" + "\n".join(f"  {'user' if r == 'user' else 'bot '}: {t[:160]}" for r, t in conv[:6]))
     if args.chat_mode == "persona":
