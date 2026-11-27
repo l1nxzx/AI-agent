@@ -9,14 +9,15 @@ Last updated after: run `small`. Models covered: 4 full Colab runs (three tiny a
 
 ## 1. Summary
 
-* All three trained models are the same 2.16M-parameter transformer. They differ only in the chat data and the
-  fraction of each batch spent on it. This isolates the effect of data.
+* Runs 1-3 are the same 2.16M-parameter transformer and differ only in the chat data and the fraction of each batch
+  spent on it, which isolates the effect of data. Run 4 repeats the idea with an 11.4M-parameter model, which
+  isolates the effect of size (with the caveats in 4.4).
 * Story generation is the same in every run: locally fluent short stories with weak global coherence and some
   repetition. Validation loss on stories is 1.81 (perplexity 6.1) in run 1 and 1.84 (perplexity 6.3) in run 3, the
   two runs with a story loss on file. The small gap is consistent with run 3 spending 35% of each batch on chat
   instead of 10%, but one run each cannot confirm that.
 * Chat is poor in every run. The model produces grammatical, human-sounding fragments that mostly do not relate
-  to the question. No data variant tested so far fixed this.
+  to the question. No data variant or model size tested so far fixed this.
 * The failures differ with the data, which shows the data decides the behavior, not a bug:
   broad assistant-style chat gives confident topical invention (run 1); mixing an LLM-written dataset with
   human dialogue gives an inconsistent voice (run 2); human-human dialogue only gives phone-call and office
@@ -98,8 +99,8 @@ Rubric, version 1, per reply:
 * One rater (the assistant), not blinded, with subjective boundaries between 0 and 1. Differences of a few tenths
   between models should not be trusted.
 * Small samples (3 to 14 replies per group), one sampling seed, no confidence intervals.
-* Runs 1 and 2 were judged only from ad-hoc transcripts, and run 3's scored items are the user's own prompts, not
-  the standard set; they overlap with it but are not identical. Running the standard set on all saved models
+* Runs 1 and 2 were judged only from ad-hoc transcripts, and the scored items of runs 3 and 4 are the user's own
+  prompts, not the standard set; they overlap with it but are not identical. Running the standard set on all saved models
   would make the comparison fair. This is the first item in section 7.
 * In interactive transcripts the conversation history carried over between prompts until `reset`, so some replies
   are conditioned on earlier turns.
