@@ -10,8 +10,8 @@ parameters, two small at 11.4M).
 ## 1. Summary
 
 * Runs 1-3 are the same 2.16M-parameter transformer and differ only in the chat data and the fraction of each batch
-  spent on it, which isolates the effect of data. Run 4 repeats the idea with an 11.4M-parameter model, which
-  isolates the effect of size (with the caveats in 4.4).
+  spent on it, which isolates the effect of data. Runs 4 and 5 repeat the two mixed/DailyDialog-only data
+  settings with an 11.4M-parameter model, which isolates the effect of size (with the caveats in 4.4 and 4.5).
 * Story generation is the same in every run: locally fluent short stories with weak global coherence and some
   repetition. Validation loss on stories is 1.81 (perplexity 6.1) in run 1 and 1.84 (perplexity 6.3) in run 3, the
   two runs with a story loss on file. The small gap is consistent with run 3 spending 35% of each batch on chat
@@ -313,7 +313,7 @@ Findings, with evidence:
 7. **Stories are not a chat skill** ("Tell me a story." -> "OK, I'll listen to you.", the roles swapped, as in the
    source dialogues where the user tells the story).
 
-Verdict: the best of the four runs on fluency, on natural short replies and on stories, and a clear step up from
+Verdict: the best of runs 1-4 on fluency, on natural short replies and on stories, and a clear step up from
 the tiny models on simple dialogue. It is not more grounded: facts, identity and memory are no better and in
 places worse (identity 0.75 against 1.30, unknown 0.14 against 0.36, but those are against run 3, which had different chat data
 and different prompt lists).
