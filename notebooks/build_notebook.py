@@ -31,7 +31,7 @@ REPO = "l1nxzx/AI-agent"
 BRANCH = "claude/optimistic-faraday-l0rq48"   # change to "main" once merged
 DRIVE_DIR = "/content/drive/MyDrive/tinylm"   # data, checkpoints and logs live here
 OVERRIDES = ""             # optional, e.g. "train.max_steps=2000 train.batch_size=32"
-CHAT_MODE = "dailydialog"  # dailydialog: real human dialogues | persona: hand-written small-bot voice | real: everyday-conversations only
+CHAT_MODE = "dailydialog_identity"  # dailydialog_identity: real dialogues + small Petryk identity layer | dailydialog_only | dailydialog | persona | real
 """)
 
 code("""

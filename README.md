@@ -118,16 +118,18 @@ emitted when explicitly allowed, so dataset text can never inject them.
 * Chat source: `HuggingFaceTB/smoltalk`, subset `everyday-conversations` (parquet, column `messages`, a list
   of `{role, content}` with roles `user` and `assistant`).
 
-Four chat modes (`prepare_data --chat_mode`):
+Five chat modes (`prepare_data --chat_mode`):
 
-* `persona` (default): a small model cannot answer open questions, and trained on broad chat it invents
-  confident nonsense. So the chat data is a hand-written persona bank (`persona.py`): a very small,
-  friendly, honest bot ("I am very small, so I make mistakes sometimes") with a consistent short voice.
-  It has about 35 intents (greetings, who are you, favorites, feelings, compliments, jokes, simple facts,
-  remembering your name, ...), each with several user phrasings and bot replies, combined into 1 to 4
-  turn conversations. Two parts are real data: "tell me a story" replies are real short TinyStories, and
-  questions the bot cannot answer are real user messages from everyday-conversations, always answered
-  with an honest "I am too small to know that". Validation uses held-out user phrasings.
+* `persona`: chat data written from the Petryk bank in `persona.py` only (about 25 kinds of exchange: greeting,
+  who are you, what can you do, limits, feelings, compliments, jokes, moods, simple context, and so on), with two
+  real parts: "tell me a story" replies are real short TinyStories, and questions the bot cannot answer are real
+  user messages from everyday-conversations, always answered with an honest "I do not know that". Petryk is a
+  calm, plain-spoken small language model that is honest about its limits. Validation uses held-out phrasings.
+* `dailydialog_identity`: real DailyDialog dialogues plus a small identity layer (default 1,500 conversations,
+  about 3% of chat tokens): the Petryk bank restricted to identity, limits, politeness, simple context, stories and
+  honest "I do not know" replies. The layer is mixed into training only; validation stays DailyDialog-only, so the
+  validation loss is directly comparable with a `dailydialog_only` run. `identity_examples.txt` in the data folder
+  shows what was added. It is ordinary training data, not a rule: the model learns it like everything else.
 * `dailydialog`: only real, human-written dialogue, nothing authored. It combines DailyDialog (about 13k
   everyday dialogues, read from the Hub's parquet conversion of `roskoN/dailydialog`; each dialogue is
   also used with its first utterance dropped so the bot side learns from both speakers) with

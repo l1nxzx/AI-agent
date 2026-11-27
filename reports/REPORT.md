@@ -489,7 +489,7 @@ sometimes."; "how many r in strawberry?" -> "I am sorry, I do not know. I like s
 colors and music." One failure: "my name is Dana" -> "Hello, Leo..." (the training names were a fixed list of
 30; the data was since changed to include generated names, untested). The very low chat loss (0.84) mostly
 reflects that the data is narrow and repetitive, so it is optimistic. This variant is authored data, not a
-downloaded dataset, and the project owner objected that it is not "real" (the model itself has no hard-coded
+downloaded dataset (and its first version had a data bug: in some intents the reply was chosen at random from a list, so a reply could be paired with the wrong question; fixed since, with question-specific replies stored as pairs, and the whole bank rewritten for the Petryk identity), and the project owner objected that it is not "real" (the model itself has no hard-coded
 answers, but the behavior is learned from authored text). It has not been run on Colab.
 
 ## Appendix B. Adding a model to this report
