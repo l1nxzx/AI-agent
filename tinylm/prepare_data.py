@@ -17,8 +17,8 @@ import os
 os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
 
 from .bpe import BPETokenizer
-from .data import (TINYSTORIES_REPO, SMOLTALK_REPO, check_and_locate_files, download, read_conversations,
-                   read_story_texts, write_dataset)
+from .data import (DAILYDIALOG_REPO, DAILYDIALOG_REVISION, SMOLTALK_REPO, TINYSTORIES_REPO, check_and_locate_files,
+                   download, read_conversations, read_dailydialog, read_story_texts, write_dataset)
 from .logutil import setup_logging
 from .persona import PersonaBuilder, pick_unknown_user_turns
 
@@ -32,9 +32,10 @@ def main(argv=None):
     p.add_argument("--max_stories", type=int, default=300_000, help="cap on training stories encoded")
     p.add_argument("--max_val_stories", type=int, default=3000)
     p.add_argument("--tokenizer_stories", type=int, default=30_000, help="stories used to train the tokenizer (chat text is always included)")
-    p.add_argument("--chat_mode", choices=["persona", "real"], default="persona",
+    p.add_argument("--chat_mode", choices=["persona", "real", "dailydialog"], default="persona",
                    help="persona: hand-written consistent bot voice (+ real stories and real user questions); "
-                        "real: the everyday-conversations data as published")
+                        "real: the everyday-conversations data as published; "
+                        "dailydialog: real human dialogues (DailyDialog) plus everyday-conversations, no authored text")
     p.add_argument("--persona_train", type=int, default=30_000, help="persona conversations for training")
     p.add_argument("--persona_val", type=int, default=600)
     p.add_argument("--seed", type=int, default=0)
@@ -55,7 +56,8 @@ def main(argv=None):
                  f"requested {args.vocab_size}/{args.chat_mode}; rebuilding")
 
     cache = args.cache_dir or os.path.join(args.data_dir, "hf_cache")
-    files = check_and_locate_files(smoke=args.smoke, num_story_shards=args.story_shards)
+    files = check_and_locate_files(smoke=args.smoke, num_story_shards=args.story_shards,
+                                   dailydialog=args.chat_mode == "dailydialog")
 
     chat_train = read_conversations(download(SMOLTALK_REPO, files["chat_train"], cache))
     chat_val = read_conversations(download(SMOLTALK_REPO, files["chat_test"], cache))
@@ -74,6 +76,14 @@ def main(argv=None):
         story_val = valid_texts[:args.max_val_stories]
     log.info(f"stories: {len(story_train)} train, {len(story_val)} val; conversations: {len(chat_train)} train, {len(chat_val)} val")
 
+    if args.chat_mode == "dailydialog":
+        log.info("chat_mode=dailydialog: chat data is entirely real, human-written dialogue (no authored replies)")
+        dd_train = read_dailydialog(download(DAILYDIALOG_REPO, files["dd_train"], cache, DAILYDIALOG_REVISION))
+        dd_val = read_dailydialog(download(DAILYDIALOG_REPO, files["dd_val"], cache, DAILYDIALOG_REVISION), both_ways=False)
+        chat_train, chat_val = dd_train + chat_train, dd_val + chat_val
+        log.info(f"chat: {len(chat_train)} train and {len(chat_val)} val dialogues (DailyDialog + everyday-conversations)")
+        for conv in chat_train[:3]:
+            log.info("dialogue example:\n" + "\n".join(f"  {'user' if r == 'user' else 'bot '}: {t[:160]}" for r, t in conv[:6]))
     if args.chat_mode == "persona":
         log.info("chat_mode=persona: chat data is the hand-written persona bank (tinylm/persona.py). The real "
                  "everyday-conversations data only supplies the user-side questions the bot answers with an honest 'I am small'.")

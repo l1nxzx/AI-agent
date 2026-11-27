@@ -79,3 +79,22 @@ def test_loss_masking_in_batches(data_dir):
     stories = DataSource(data_dir, context_len=16, chat_fraction=0.0, seed=1)
     _, y3, _ = stories.train_batch(0, 0, 8)
     assert not (y3 == -100).any()   # stories are always fully learned
+
+
+def test_clean_dailydialog():
+    from tinylm.data import clean_dailydialog
+    assert clean_dailydialog("Say , Jim , how about a walk ?") == "Say, Jim, how about a walk?"
+    assert clean_dailydialog("Let ' s go . I don’t mind .") == "Let's go. I don't mind."
+    assert clean_dailydialog("I guess you are right.But what now ?") == "I guess you are right. But what now?"
+
+
+def test_read_dailydialog(tmp_path):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from tinylm.data import read_dailydialog
+    p = tmp_path / "dd.parquet"
+    pq.write_table(pa.table({"utterances": [["Hi !", "Hello .", "How are you ?"], ["A ?", "B ."]]}), p)
+    convs = read_dailydialog(str(p))
+    assert convs[0] == [("user", "Hi!"), ("assistant", "Hello.")]          # trailing user turn dropped
+    assert convs[1] == [("user", "Hello."), ("assistant", "How are you?")]  # first utterance dropped variant
+    assert convs[2] == [("user", "A?"), ("assistant", "B.")]

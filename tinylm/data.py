@@ -15,6 +15,7 @@ role names mapped to the <|user|> and <|bot|> markers.
 """
 import json
 import os
+import re
 import time
 
 import numpy as np
@@ -30,6 +31,13 @@ TS_VALID_PREFIX = "data/validation-"
 CHAT_TRAIN_FILE = "data/everyday-conversations/train-00000-of-00001.parquet"
 CHAT_TEST_FILE = "data/everyday-conversations/test-00000-of-00001.parquet"
 
+# DailyDialog (about 13k human-written everyday dialogues). The Hub copy is a script dataset, so we read the
+# automatically converted parquet files from the refs/convert/parquet revision.
+DAILYDIALOG_REPO = "roskoN/dailydialog"
+DAILYDIALOG_REVISION = "refs/convert/parquet"
+DAILYDIALOG_TRAIN = "full/train/0000.parquet"
+DAILYDIALOG_VAL = "full/validation/0000.parquet"
+
 ROLE_TO_MARKER = {"user": USER, "assistant": BOT}
 BIN_FILES = ["stories_train.bin", "stories_val.bin", "chat_train.bin", "chat_val.bin"]
 
@@ -37,7 +45,7 @@ BIN_FILES = ["stories_train.bin", "stories_val.bin", "chat_train.bin", "chat_val
 # ---------------------------------------------------------------------------------------------
 # Dataset checks and download
 # ---------------------------------------------------------------------------------------------
-def check_and_locate_files(smoke=False, num_story_shards=1):
+def check_and_locate_files(smoke=False, num_story_shards=1, dailydialog=False):
     """Ask the Hub which files exist. Returns the file names we will download. Raises with a clear
     message if a dataset or an expected file is missing."""
     from huggingface_hub import HfApi
@@ -59,6 +67,15 @@ def check_and_locate_files(smoke=False, num_story_shards=1):
             raise RuntimeError(f"{SMOLTALK_REPO}: expected file {f} is missing")
     out["story_valid"] = valid_shards[0]
     out["story_train"] = train_shards[:num_story_shards] if not smoke else []
+    if dailydialog:
+        if not api.repo_exists(DAILYDIALOG_REPO, repo_type="dataset"):
+            raise RuntimeError(f"dataset {DAILYDIALOG_REPO} does not exist on the Hugging Face Hub")
+        dd_files = set(api.list_repo_files(DAILYDIALOG_REPO, repo_type="dataset", revision=DAILYDIALOG_REVISION))
+        for f in (DAILYDIALOG_TRAIN, DAILYDIALOG_VAL):
+            if f not in dd_files:
+                raise RuntimeError(f"{DAILYDIALOG_REPO}@{DAILYDIALOG_REVISION}: expected file {f} is missing; found {sorted(dd_files)}")
+        out["dd_train"], out["dd_val"] = DAILYDIALOG_TRAIN, DAILYDIALOG_VAL
+        log.info(f"{DAILYDIALOG_REPO}: found train and validation parquet files")
     out["chat_train"] = CHAT_TRAIN_FILE
     out["chat_test"] = CHAT_TEST_FILE
     log.info(f"{TINYSTORIES_REPO}: found {len(train_shards)} train shard(s), {len(valid_shards)} validation file(s)")
@@ -66,12 +83,12 @@ def check_and_locate_files(smoke=False, num_story_shards=1):
     return out
 
 
-def download(repo, filename, cache_dir):
+def download(repo, filename, cache_dir, revision=None):
     from huggingface_hub import hf_hub_download
 
     log = get_logger()
     t0 = time.time()
-    path = hf_hub_download(repo, filename, repo_type="dataset", cache_dir=cache_dir)
+    path = hf_hub_download(repo, filename, repo_type="dataset", cache_dir=cache_dir, revision=revision)
     log.info(f"downloaded {repo}/{filename} ({os.path.getsize(path) / 1e6:.1f} MB, {time.time() - t0:.1f}s)")
     return path
 
@@ -123,6 +140,43 @@ def read_conversations(parquet_path):
             convs.append(conv)
     log.info(f"{os.path.basename(parquet_path)}: {len(convs)} conversations, "
              f"{unknown_roles} messages with other roles skipped, {trailing_user} trailing user turns dropped")
+    return convs
+
+
+def clean_dailydialog(text):
+    """DailyDialog is stored pre-tokenized ('Say , Jim , how about it ?'). Undo that so the text looks like
+    normal writing, and map curly quotes to plain ones."""
+    text = text.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
+    text = text.replace("\u2014", "-").replace("\u2013", "-")
+    text = re.sub(r"\s+'\s*(s|t|m|re|ve|ll|d)\b", r"'\1", text)      # "Let ' s" -> "Let's"
+    text = re.sub(r"\s+([,.!?;:])", r"\1", text)                        # "word ," -> "word,"
+    text = re.sub(r"([a-z])([.!?])([A-Z])", r"\1\2 \3", text)         # "right.But" -> "right. But"
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def read_dailydialog(parquet_path, both_ways=True):
+    """DailyDialog dialogues as (role, text) lists. Speakers alternate, so the first speaker is 'user' and the
+    second is 'assistant'. With both_ways, a dialogue is also added with its first utterance dropped, so the
+    bot side learns from both speakers' kinds of replies. Trailing user turns are dropped."""
+    import pyarrow.parquet as pq
+
+    log = get_logger()
+    table = pq.read_table(parquet_path)
+    if "utterances" not in table.schema.names:
+        raise RuntimeError(f"{parquet_path}: expected an 'utterances' column, found {table.schema.names}")
+    convs, dropped = [], 0
+    for utts in table.column("utterances").to_pylist():
+        utts = [clean_dailydialog(u) for u in utts]
+        utts = [u for u in utts if u]
+        variants = [utts] + ([utts[1:]] if both_ways and len(utts) >= 3 else [])
+        for v in variants:
+            conv = [("user" if i % 2 == 0 else "assistant", u) for i, u in enumerate(v)]
+            if conv and conv[-1][0] == "user":
+                conv.pop()
+                dropped += 1
+            if len(conv) >= 2:
+                convs.append(conv)
+    log.info(f"{os.path.basename(parquet_path)}: {len(convs)} dialogues (both_ways={both_ways}), {dropped} trailing turns dropped")
     return convs
 
 
