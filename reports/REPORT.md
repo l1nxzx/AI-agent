@@ -113,7 +113,10 @@ Rubric, version 1, per reply:
   would make the comparison fair. This is the first item in section 7.
 * In interactive transcripts the conversation history carried over between prompts until `reset`, so some replies
   are conditioned on earlier turns.
-* Sampling settings were not recorded in every paste (see each model).
+* Sampling settings were not recorded in every paste (see each model). All transcripts in this report were
+  made **before the repetition penalty existed, so effectively with no penalty (1.0)**. Chat and `eval_chat` now
+  default to a penalty of 1.2 (the file header records it), so new transcripts are not directly comparable with these
+  unless run with `--repetition_penalty 1.0`.
 
 ## 4. Models
 
@@ -458,9 +461,11 @@ runs 3 and 5 (2.1570 -> 1.9859).
 1. Paste the `EVAL` lines (one per 500 steps) for runs 4 and 5 to see exactly where the chat loss turned (optional).
 2. Run the standard set on the saved models of runs 1-5 (`tinylm.eval_chat`) and score them, so the comparison in
    5.1 uses identical prompts. Run 2 is the most useful one to add, as the partner of run 4.
-3. Add early stopping on the chat validation loss to training (a code change), so overfitting runs stop by themselves.
-4. Add a repetition penalty at sampling time and re-run the standard set to measure its effect on the loops and
-   self-copying.
+3. Early stopping is implemented (`train.early_stop_patience`, default 3 validations without a new best mixed
+   loss); use it in the next `small` or `medium` run and record where it stops.
+4. A repetition penalty is implemented (`--repetition_penalty`, default 1.2 in chat and `eval_chat`). Measure it: run
+   the standard set on the saved models with 1.0, 1.1, 1.2 and 1.3 and score the loops and non-sequitur rate. A
+   quick test on a weak CPU model (not one of the runs above) showed loops broken at 1.2 and drift at 1.4.
 5. Try a small authored identity layer on top of real data (a few percent of the chat share, covering greetings,
    identity and "I do not know"). This is a data change only; no rules in the model or code.
 6. Hold off on `medium` (20M) until there is more chat data: it would overfit the chat set even sooner.

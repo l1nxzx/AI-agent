@@ -43,14 +43,15 @@ STANDARD_SET = [
 ]
 
 
-def run_eval(model, tok, temperature=0.5, top_k=20, max_new_tokens=80, seed=0):
+def run_eval(model, tok, temperature=0.5, top_k=20, max_new_tokens=80, seed=0, repetition_penalty=1.2):
     gen = torch.Generator().manual_seed(seed)
     records = []
     for group, turns, repeats in STANDARD_SET:
         for _ in range(repeats):
             history, exchange = [], []
             for user in turns:
-                exchange.append((user, chat_turn(model, tok, history, user, max_new_tokens, temperature, top_k, gen)))
+                exchange.append((user, chat_turn(model, tok, history, user, max_new_tokens, temperature, top_k, gen,
+                                                 repetition_penalty)))
             records.append({"group": group, "turns": exchange})
     return records
 
@@ -74,6 +75,7 @@ def main(argv=None):
     p.add_argument("--temperature", type=float, default=0.5)
     p.add_argument("--top_k", type=int, default=20)
     p.add_argument("--max_new_tokens", type=int, default=80)
+    p.add_argument("--repetition_penalty", type=float, default=1.2, help="1.0 = off (as in the first report transcripts)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = p.parse_args(argv)
@@ -81,10 +83,12 @@ def main(argv=None):
     tok = BPETokenizer.load(os.path.join(args.ckpt_dir, "tokenizer.json"))
     model, ckpt = load_model(os.path.join(args.ckpt_dir, f"ckpt_{args.which}.pt"), args.device)
     header = (f"standard chat set | run {os.path.basename(os.path.abspath(args.ckpt_dir))} | {args.which} checkpoint, step "
-              f"{ckpt['step']}, val_loss {ckpt.get('val_loss')} | temperature {args.temperature}, top_k {args.top_k}, seed {args.seed}\n")
-    records = run_eval(model, tok, args.temperature, args.top_k, args.max_new_tokens, args.seed)
+              f"{ckpt['step']}, val_loss {ckpt.get('val_loss')} | temperature {args.temperature}, top_k {args.top_k}, "
+              f"repetition_penalty {args.repetition_penalty}, seed {args.seed}\n")
+    records = run_eval(model, tok, args.temperature, args.top_k, args.max_new_tokens, args.seed, args.repetition_penalty)
     text = header + format_records(records)
-    base = os.path.join(args.ckpt_dir, f"eval_chat_{args.which}")
+    suffix = "" if args.repetition_penalty == 1.2 else f"_rp{args.repetition_penalty}"
+    base = os.path.join(args.ckpt_dir, f"eval_chat_{args.which}{suffix}")
     with open(base + ".txt", "w", encoding="utf-8") as f:
         f.write(text)
     with open(base + ".json", "w", encoding="utf-8") as f:

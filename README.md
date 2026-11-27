@@ -183,6 +183,21 @@ Checkpoints are written to a temp file and renamed (so a crash cannot corrupt th
 one is kept as a fallback. Resume restores model, optimizer, loss-scaler and step. Resuming with a
 different model config is refused.
 
+### Early stopping and repetition control
+
+* **Early stopping** (`train.early_stop_patience`, default 3): after each validation run the mixed validation loss
+  is compared with the best so far; after 3 validations in a row without a new best, training stops, saves its
+  state and prints `EARLY STOP`. The best checkpoint (`ckpt_best.pt`) is the one to use. The counter is stored in
+  the checkpoint, so a Colab disconnect does not reset it, and re-running a stopped run does nothing. Set
+  `train.early_stop_patience=0` to turn it off or to keep training a stopped run.
+* **Repetition penalty** (`--repetition_penalty` in `sample`, `chat` and `eval_chat`): tokens already used become
+  less likely (a positive logit is divided by the penalty, a negative one multiplied by it). In chat it covers the
+  words of the bot's own earlier replies and the reply being written; the end-of-reply token is never penalized.
+  Defaults: 1.2 in `chat` and `eval_chat`, 1.0 (off) in `sample`. In a quick test on a weak CPU model 1.2 broke an
+  identical-reply loop and 1.4 also made replies drift, so treat the value as something to tune per model, for
+  example `python -m tinylm.eval_chat --ckpt_dir <run> --repetition_penalty 1.0` and then `1.1`, `1.2`, `1.3`
+  (each writes its own transcript file).
+
 ### Sampling (`sample.py`)
 
 Logits are divided by the temperature, cut to the top-k, turned into probabilities and sampled.

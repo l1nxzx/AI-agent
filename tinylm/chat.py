@@ -31,13 +31,31 @@ def trim_history(history, tok, max_tokens):
     return history
 
 
-def chat_turn(model, tok, history, text, max_new_tokens=120, temperature=0.5, top_k=20, generator=None):
+def bot_reply_ids(history, tok):
+    """The set of token ids the bot has already used in earlier replies in this conversation (not the user's
+    words, not the special markers). Used to discourage the bot from repeating itself."""
+    bot, end = tok.token_id(BOT), tok.token_id(END)
+    used, inside = set(), False
+    for t in history:
+        if t == bot:
+            inside = True
+        elif t == end:
+            inside = False
+        elif inside and t < tok.num_base:
+            used.add(t)
+    return used
+
+
+def chat_turn(model, tok, history, text, max_new_tokens=120, temperature=0.5, top_k=20, generator=None,
+              repetition_penalty=1.0):
     """Add one user message to `history` (a list of token ids, modified in place), generate the bot reply,
     add it to the history too, and return the reply text. Shared by the interactive loop and eval_chat."""
     stop = stop_ids_for(tok)
     history += [tok.token_id(USER)] + tok.encode(text) + [tok.token_id(END), tok.token_id(BOT)]
     trim_history(history, tok, model.cfg.context_len - max_new_tokens)   # leave room for the reply
-    reply = generate(model, history, max_new_tokens, temperature, top_k, stop, generator)
+    penalize = bot_reply_ids(history, tok) if repetition_penalty != 1.0 else ()
+    reply = generate(model, history, max_new_tokens, temperature, top_k, stop, generator,
+                     repetition_penalty, penalize)
     history += reply + [tok.token_id(END)]
     return tok.decode(reply).strip()
 
@@ -49,6 +67,9 @@ def main(argv=None):
     p.add_argument("--max_new_tokens", type=int, default=120)
     p.add_argument("--temperature", type=float, default=0.5)
     p.add_argument("--top_k", type=int, default=20)
+    p.add_argument("--repetition_penalty", type=float, default=1.2,
+                   help="1.0 = off. Discourages the bot from reusing words from its own earlier replies and from "
+                        "repeating itself inside a reply (default 1.2)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = p.parse_args(argv)
@@ -77,7 +98,8 @@ def main(argv=None):
             history = []
             print("(history cleared)")
             continue
-        print("bot:", chat_turn(model, tok, history, text, args.max_new_tokens, args.temperature, args.top_k, gen))
+        print("bot:", chat_turn(model, tok, history, text, args.max_new_tokens, args.temperature, args.top_k, gen,
+                                  args.repetition_penalty))
 
 
 if __name__ == "__main__":

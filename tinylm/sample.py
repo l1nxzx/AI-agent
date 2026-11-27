@@ -22,9 +22,27 @@ from .logutil import setup_logging
 from .model import GPT
 
 
+def apply_repetition_penalty(logits, token_ids, penalty):
+    """Make tokens that were already used less likely (the 'CTRL' penalty). logits: (1, vocab). For each token
+    in token_ids, a positive logit is divided by `penalty` and a negative one multiplied by it, so the token
+    always becomes less likely. penalty 1.0 changes nothing; 1.1 to 1.3 is typical."""
+    if penalty == 1.0 or not token_ids:
+        return logits
+    idx = torch.tensor(sorted(token_ids), dtype=torch.long, device=logits.device)
+    vals = logits[0, idx]
+    logits = logits.clone()
+    logits[0, idx] = torch.where(vals > 0, vals / penalty, vals * penalty)
+    return logits
+
+
 @torch.no_grad()
-def generate(model, ids, max_new_tokens, temperature=0.8, top_k=40, stop_ids=(), generator=None):
-    """ids: list of ints (the prompt). Returns the list of NEW token ids (stop token excluded)."""
+def generate(model, ids, max_new_tokens, temperature=0.8, top_k=40, stop_ids=(), generator=None,
+             repetition_penalty=1.0, penalize_ids=()):
+    """ids: list of ints (the prompt). Returns the list of NEW token ids (stop token excluded).
+
+    repetition_penalty > 1 discourages repeating: tokens already generated in this reply, plus the tokens in
+    `penalize_ids` (for chat: the words of the bot's earlier replies), become less likely. The stop tokens
+    are never penalized, otherwise replies could not end."""
     was_training = model.training
     model.eval()
     device = next(model.parameters()).device
@@ -35,6 +53,8 @@ def generate(model, ids, max_new_tokens, temperature=0.8, top_k=40, stop_ids=(),
         # whole window. Simple, and fast enough for models this small.)
         logits, _ = model(x[:, -model.cfg.context_len:])
         logits = logits[:, -1, :].float()
+        if repetition_penalty != 1.0:
+            logits = apply_repetition_penalty(logits, (set(penalize_ids) | set(new)) - set(stop_ids), repetition_penalty)
         if temperature <= 0:
             nxt = logits.argmax(dim=-1, keepdim=True)
         else:
@@ -90,6 +110,8 @@ def main(argv=None):
     p.add_argument("--temperature", type=float, default=0.8)
     p.add_argument("--top_k", type=int, default=40)
     p.add_argument("--num_samples", type=int, default=1)
+    p.add_argument("--repetition_penalty", type=float, default=1.0,
+                   help="1.0 = off; 1.1-1.3 discourages repeating words within the reply")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = p.parse_args(argv)
@@ -108,7 +130,7 @@ def main(argv=None):
     gen = torch.Generator(device="cpu").manual_seed(args.seed)
     for i in range(args.num_samples):
         out = generate(model, prompt_ids, args.max_new_tokens, args.temperature, args.top_k,
-                       stop_ids_for(tok), gen)
+                       stop_ids_for(tok), gen, args.repetition_penalty)
         label = "bot: " if args.chat else ""
         print(f"--- sample {i + 1} ({len(out)} tokens) ---")
         print(("user: " + args.prompt + "\n" if args.chat else args.prompt) + label + tok.decode(out))
