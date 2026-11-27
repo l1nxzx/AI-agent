@@ -4,7 +4,7 @@ Living document. One section per trained model, a comparison table, and cross-cu
 added at the end of section 4 and to the tables in section 5. Evidence (verbatim transcripts and item-level
 scores) is stored next to this file in `transcripts/` and `scores/`.
 
-Last updated after: run `tiny_dailydialog_only`. Models covered: 3 full Colab runs (all tiny, 2.16M parameters).
+Last updated after: run `tiny_dailydialog_only` (final metrics added). Models covered: 3 full Colab runs (all tiny, 2.16M parameters).
 Pending: `small`.
 
 ## 1. Summary
@@ -12,8 +12,9 @@ Pending: `small`.
 * All three trained models are the same 2.16M-parameter transformer. They differ only in the chat data and the
   fraction of each batch spent on it. This isolates the effect of data.
 * Story generation is the same in every run: locally fluent short stories with weak global coherence and some
-  repetition. Validation loss on stories is 1.81 (perplexity 6.1) for the first run, the only run for which a
-  story loss is on file.
+  repetition. Validation loss on stories is 1.81 (perplexity 6.1) in run 1 and 1.84 (perplexity 6.3) in run 3, the
+  two runs with a story loss on file. The small gap is consistent with run 3 spending 35% of each batch on chat
+  instead of 10%, but one run each cannot confirm that.
 * Chat is poor in every run. The model produces grammatical, human-sounding fragments that mostly do not relate
   to the question. No data variant tested so far fixed this.
 * The failures differ with the data, which shows the data decides the behavior, not a bug:
@@ -38,7 +39,7 @@ Pending: `small`.
 | optimizer | AdamW, peak lr 2e-3, 300 warmup steps, cosine decay to 2e-4, weight decay 0.1, grad clip 1.0 |
 | schedule | 8,000 steps, batch 64 x 256 tokens = 16,384 tokens/step, 131,072,000 tokens in total |
 | hardware | Colab Tesla T4, fp16 with loss scaling, 1.24 GB GPU memory, about 270-290k tokens/s, 57-61 ms/step |
-| wall time | 8.7 minutes for run 1 (the only run with a timing on file) |
+| wall time | 8.7 minutes (run 1), 8.8 minutes (run 3); run 2 not on file |
 
 Chat format in all runs: `<|user|> text <|end|> <|bot|> text <|end|> ... <|endoftext|>`.
 
@@ -172,6 +173,17 @@ tokens; plan of about 1.1 passes over the stories and 14 over the chat data; the
 365 tokens, longer than the 256 context, so many conversations are cut into windows). **Still missing:** the final
 validation losses, training time and sample lines (in `runs/tiny_dailydialog_only/train.log` on Drive).
 
+Final result (step 8000, the best checkpoint; run finished in 8.8 minutes):
+
+| val stories | val chat (bot tokens only) | mixed (65% stories, 35% chat) |
+|---|---|---|
+| 1.8369 (ppl 6.3) | 2.7513 (ppl 15.7) | 2.1570 |
+
+The end-of-training samples in the log (temperature 0.8, top-k 40) were a coherent but wandering story ("Once upon a
+time, there was a girl who loved to play with her toys...") and the chat reply "I'm a party." to "Hi, how are you?".
+Chat perplexity 15.7 is higher than run 1's 8.8, but the two are not comparable (different chat data and a
+different loss: bot tokens only here, all tokens in run 1). Story loss is close to run 1's.
+
 Sampling settings during chat were not recorded (notebook default 0.5 / 20). Full transcript:
 `transcripts/tiny_dailydialog_only.txt`. Item-level scores: `scores/tiny_dailydialog_only.json`
 (57 graded replies; the earlier rough per-group scores I gave in chat are superseded by these).
@@ -233,7 +245,7 @@ Runs 1 and 2 are not yet scored item by item (see section 3.3).
 |---|---|---|---|---|
 | 1 `tiny` | 1.8074 | 2.1776 | 1.8444 (chat share 10%) | 8.7 min |
 | 2 `tiny_dailydialog` | not provided | not provided | 2.1284 (chat share 35%) | not provided |
-| 3 `tiny_dailydialog_only` | not provided | not provided | not provided | not provided |
+| 3 `tiny_dailydialog_only` | 1.8369 | 2.7513 (bot tokens only) | 2.1570 (chat share 35%) | 8.8 min |
 
 Mixed losses are not comparable (different chat sets and shares).
 
@@ -253,8 +265,8 @@ Mixed losses are not comparable (different chat sets and shares).
 
 1. **Data decides chat behavior at this size.** With the model fixed, the chat data alone changed the failure mode
    from topical invention to inconsistent voices to phone-call style. (Evidence: runs 1-3.)
-2. **Validation loss does not predict chat quality.** Run 1 had the best chat perplexity on file and the worst
-   replies. Reading answers is required.
+2. **Validation loss does not predict chat quality.** Run 1 had the lowest chat perplexity on file (8.8, against
+   15.7 for run 3, which are not directly comparable) and the worst replies. Reading answers is required.
 3. **Fluency is learned easily; grounding is not.** Grammar, register and local plausibility appear within a
    few thousand steps. Facts, arithmetic, identity and memory do not appear at 2M parameters on this data.
 4. **No uncertainty without data for it.** Real dialogue data never says "I do not know I am a small model", so
