@@ -43,7 +43,10 @@ def generate(model, ids, max_new_tokens, temperature=0.8, top_k=40, stop_ids=(),
                 kth = torch.topk(logits, min(top_k, logits.size(-1))).values[:, -1, None]
                 logits = logits.masked_fill(logits < kth, float("-inf"))
             probs = torch.softmax(logits, dim=-1)
-            nxt = torch.multinomial(probs, 1, generator=generator)
+            # The generator may live on a different device than the model (e.g. a CPU generator with a
+            # GPU model); torch.multinomial needs them to match, so sample where the generator is.
+            gdev = generator.device if generator is not None else probs.device
+            nxt = torch.multinomial(probs.to(gdev), 1, generator=generator).to(probs.device)
         tok = int(nxt.item())
         if tok in stop_ids:
             break

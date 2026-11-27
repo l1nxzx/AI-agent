@@ -293,7 +293,10 @@ def main(argv=None):
                      f"val chat {ev['chat']:.4f} (ppl {math.exp(ev['chat']):.1f}) | mix {ev['mix']:.4f} | "
                      f"best {best_val:.4f}{' (new best)' if improved else ''}")
             metrics.write(type="eval", step=step, **{f"val_{k}": v for k, v in ev.items()})
-            log_samples(model, tok, tc, device)
+            try:
+                log_samples(model, tok, tc, device)
+            except Exception as e:  # a sampling problem must never kill a long training run
+                log.warning(f"sample generation failed ({e!r}); continuing")
             if improved:
                 checkpoint(BEST, with_optimizer=False, val_loss=ev["mix"])
             t_last = time.time()  # do not count eval time in throughput
