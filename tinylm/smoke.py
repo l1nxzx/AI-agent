@@ -34,7 +34,7 @@ def main():
     py = [sys.executable, "-u", "-m"]
     cfg = ["--config", "configs/smoke.json", "--data_dir", data_dir, "--out_dir", run_dir]
 
-    run(py + ["tinylm.prepare_data", "--data_dir", data_dir, "--vocab_size", "512", "--smoke"])
+    run(py + ["tinylm.prepare_data", "--data_dir", data_dir, "--vocab_size", "512", "--smoke", "--persona_train", "1500", "--persona_val", "100"])
     out1 = run(py + ["tinylm.train"] + cfg + ["--set", "train.max_steps=10", "train.warmup_steps=3"])
     out2 = run(py + ["tinylm.train"] + cfg + ["--set", "train.max_steps=20", "train.warmup_steps=3"])
     sample = run(py + ["tinylm.sample", "--ckpt_dir", run_dir, "--chat", "--prompt", "Hello", "--max_new_tokens", "20"])

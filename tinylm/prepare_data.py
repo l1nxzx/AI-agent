@@ -20,6 +20,7 @@ from .bpe import BPETokenizer
 from .data import (TINYSTORIES_REPO, SMOLTALK_REPO, check_and_locate_files, download, read_conversations,
                    read_story_texts, write_dataset)
 from .logutil import setup_logging
+from .persona import PersonaBuilder, pick_unknown_user_turns
 
 
 def main(argv=None):
@@ -31,6 +32,12 @@ def main(argv=None):
     p.add_argument("--max_stories", type=int, default=300_000, help="cap on training stories encoded")
     p.add_argument("--max_val_stories", type=int, default=3000)
     p.add_argument("--tokenizer_stories", type=int, default=30_000, help="stories used to train the tokenizer (chat text is always included)")
+    p.add_argument("--chat_mode", choices=["persona", "real"], default="persona",
+                   help="persona: hand-written consistent bot voice (+ real stories and real user questions); "
+                        "real: the everyday-conversations data as published")
+    p.add_argument("--persona_train", type=int, default=30_000, help="persona conversations for training")
+    p.add_argument("--persona_val", type=int, default=600)
+    p.add_argument("--seed", type=int, default=0)
     p.add_argument("--smoke", action="store_true", help="use only the small TinyStories validation file, split into train/val (for quick tests)")
     p.add_argument("--force", action="store_true")
     args = p.parse_args(argv)
@@ -40,10 +47,12 @@ def main(argv=None):
     if os.path.exists(meta_path) and not args.force:
         with open(meta_path) as f:
             meta = json.load(f)
-        if meta["vocab_size"] == args.vocab_size:
-            log.info(f"{meta_path} already exists with vocab_size={args.vocab_size}; nothing to do (use --force to rebuild)")
+        if meta["vocab_size"] == args.vocab_size and meta.get("chat_mode", "real") == args.chat_mode:
+            log.info(f"{meta_path} already exists (vocab_size={args.vocab_size}, chat_mode={args.chat_mode}); "
+                     "nothing to do (use --force to rebuild)")
             return
-        log.info(f"existing data has vocab_size={meta['vocab_size']}, requested {args.vocab_size}; rebuilding")
+        log.info(f"existing data has vocab_size={meta['vocab_size']} chat_mode={meta.get('chat_mode', 'real')}, "
+                 f"requested {args.vocab_size}/{args.chat_mode}; rebuilding")
 
     cache = args.cache_dir or os.path.join(args.data_dir, "hf_cache")
     files = check_and_locate_files(smoke=args.smoke, num_story_shards=args.story_shards)
@@ -65,6 +74,17 @@ def main(argv=None):
         story_val = valid_texts[:args.max_val_stories]
     log.info(f"stories: {len(story_train)} train, {len(story_val)} val; conversations: {len(chat_train)} train, {len(chat_val)} val")
 
+    if args.chat_mode == "persona":
+        log.info("chat_mode=persona: chat data is the hand-written persona bank (tinylm/persona.py). The real "
+                 "everyday-conversations data only supplies the user-side questions the bot answers with an honest 'I am small'.")
+        builder = PersonaBuilder(
+            stories={"train": story_train, "val": story_val},
+            unknown_user_turns={"train": pick_unknown_user_turns(chat_train), "val": pick_unknown_user_turns(chat_val)})
+        chat_train = builder.build(args.persona_train, "train", args.seed, log)
+        chat_val = builder.build(args.persona_val, "val", args.seed, log)
+        for conv in chat_train[:5]:
+            log.info("persona example:\n" + "\n".join(f"  {'user' if r == 'user' else 'bot '}: {t[:160]}" for r, t in conv))
+
     tok_texts = story_train[:args.tokenizer_stories] + [c for conv in chat_train for _, c in conv]
     log.info(f"training tokenizer on {len(tok_texts)} texts, target vocab {args.vocab_size}")
     tok = BPETokenizer.train(tok_texts, args.vocab_size, logger=log)
@@ -72,8 +92,8 @@ def main(argv=None):
     log.info("longest learned tokens: " + ", ".join(repr(tok.vocab[i].decode("utf-8", "replace")) for i in big))
 
     sources = {"stories": TINYSTORIES_REPO, "chat": SMOLTALK_REPO + " (everyday-conversations)",
-               "files": {k: v for k, v in files.items()}, "smoke": args.smoke}
-    write_dataset(args.data_dir, tok, story_train, story_val, chat_train, chat_val, sources)
+               "files": {k: v for k, v in files.items()}, "smoke": args.smoke, "chat_mode": args.chat_mode}
+    write_dataset(args.data_dir, tok, story_train, story_val, chat_train, chat_val, sources, chat_mode=args.chat_mode)
 
 
 if __name__ == "__main__":

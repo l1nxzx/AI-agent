@@ -100,11 +100,25 @@ which 5 are special tokens). The ordered merge list is the whole tokenizer. Text
 word-like pre-tokens by a regex, and merges never cross those boundaries. Special tokens are only
 emitted when explicitly allowed, so dataset text can never inject them.
 
-### Data (`data.py`, `prepare_data.py`)
+### Data (`data.py`, `persona.py`, `prepare_data.py`)
 
 * Stories: `roneneldan/TinyStories` (parquet, column `text`).
-* Chat: `HuggingFaceTB/smoltalk`, subset `everyday-conversations` (parquet, column `messages`, a list
+* Chat source: `HuggingFaceTB/smoltalk`, subset `everyday-conversations` (parquet, column `messages`, a list
   of `{role, content}` with roles `user` and `assistant`).
+
+Two chat modes (`prepare_data --chat_mode`):
+
+* `persona` (default): a small model cannot answer open questions, and trained on broad chat it invents
+  confident nonsense. So the chat data is a hand-written persona bank (`persona.py`): a very small,
+  friendly, honest bot ("I am very small, so I make mistakes sometimes") with a consistent short voice.
+  It has about 35 intents (greetings, who are you, favorites, feelings, compliments, jokes, simple facts,
+  remembering your name, ...), each with several user phrasings and bot replies, combined into 1 to 4
+  turn conversations. Two parts are real data: "tell me a story" replies are real short TinyStories, and
+  questions the bot cannot answer are real user messages from everyday-conversations, always answered
+  with an honest "I am too small to know that". Validation uses held-out user phrasings.
+* `real`: the everyday-conversations data as published.
+
+In both modes the chat loss is computed on the bot's words only (`train.chat_loss = "bot_only"`).
 
 Before relying on them, the script asks the Hub that the datasets and expected files exist, and
 checks the columns and roles when reading (it raises with a clear message otherwise). Findings used
@@ -171,11 +185,14 @@ Things that indicate a healthy run:
 
 ## Known limits and notes
 
-* The everyday-conversations set is small (about 2,200 conversations, 570k tokens, around 250 tokens each,
-  some longer than the 256 context). Expect a small model to learn the chat format and tone, not
-  knowledge. Training makes many passes over it, which is why `chat_fraction` defaults to 0.10.
-* Loss is computed on all tokens, including user turns. Masking the loss to bot turns only is a possible
-  later change.
+* The real everyday-conversations set is small (about 2,200 conversations, 570k tokens) and broad, so
+  a 2M model trained on it only invents topical nonsense. That is why `persona` is the default mode.
+  The persona bot is deliberately narrow: it will chat, tell stories and jokes, and admit it is small,
+  but it knows very little. That is what makes tiny models feel coherent.
+* Persona data is hand-written and template-expanded, so it is not a 'download from Hugging Face' dataset.
+  Edit `tinylm/persona.py` to change the voice: replies and phrasings are plain lists.
+* Because validation phrasings are held out, but replies are shared, chat validation loss is optimistic.
+  The real test is chatting with it.
 * Sampling has no KV cache (it recomputes the window each token); fine at this size.
 * Both datasets have their own licenses; see their Hugging Face dataset cards before reusing the data.
 * The prepare script disables the Hugging Face "Xet" download backend (`HF_HUB_DISABLE_XET=1`) because it

@@ -31,6 +31,7 @@ REPO = "l1nxzx/AI-agent"
 BRANCH = "claude/optimistic-faraday-l0rq48"   # change to "main" once merged
 DRIVE_DIR = "/content/drive/MyDrive/tinylm"   # data, checkpoints and logs live here
 OVERRIDES = ""             # optional, e.g. "train.max_steps=2000 train.batch_size=32"
+CHAT_MODE = "persona"      # persona: short, consistent, honest tiny-bot voice | real: everyday-conversations as published
 """)
 
 code("""
@@ -70,9 +71,9 @@ code("""
 # The result is stored on Drive, so this only runs once per vocab size.
 import json
 VOCAB = json.load(open(f"configs/{CONFIG}.json"))["model"]["vocab_size"]
-DATA_DIR = f"{DRIVE_DIR}/data_v{VOCAB}"
-RUN_DIR = f"{DRIVE_DIR}/runs/{CONFIG}"
-!python -u -m tinylm.prepare_data --data_dir {DATA_DIR} --cache_dir /content/hf_cache --vocab_size {VOCAB}
+DATA_DIR = f"{DRIVE_DIR}/data_v{VOCAB}_{CHAT_MODE}"
+RUN_DIR = f"{DRIVE_DIR}/runs/{CONFIG}_{CHAT_MODE}"
+!python -u -m tinylm.prepare_data --data_dir {DATA_DIR} --cache_dir /content/hf_cache --vocab_size {VOCAB} --chat_mode {CHAT_MODE}
 """)
 
 code("""
@@ -100,13 +101,13 @@ plt.show()
 code("""
 # 7) Generate text from the best checkpoint.
 !python -m tinylm.sample --ckpt_dir {RUN_DIR} --prompt "Once upon a time" --num_samples 2 --temperature 0.8 --top_k 40
-!python -m tinylm.sample --ckpt_dir {RUN_DIR} --chat --prompt "Hi, how are you today?" --num_samples 2 --temperature 0.7 --top_k 40
+!python -m tinylm.sample --ckpt_dir {RUN_DIR} --chat --prompt "Hi, how are you today?" --num_samples 2 --temperature 0.5 --top_k 20
 """)
 
 code("""
 # 8) Chat with the model (type messages in the box; 'quit' to stop, 'reset' to start a new conversation).
 # If you updated the code since cell 3, re-run cell 3 first.
-!python -u -m tinylm.chat --ckpt_dir {RUN_DIR}
+!python -u -m tinylm.chat --ckpt_dir {RUN_DIR} --temperature 0.5 --top_k 20
 """)
 
 nb = {"cells": cells, "nbformat": 4, "nbformat_minor": 5,
