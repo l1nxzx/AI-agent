@@ -1,0 +1,72 @@
+"""Train, resume and sample on a tiny synthetic corpus, with no network access."""
+import json
+import os
+
+import pytest
+
+from tinylm.bpe import BPETokenizer
+from tinylm.config import load_config
+from tinylm.data import write_dataset
+from tinylm.logutil import setup_logging
+from tinylm.sample import main as sample_main
+from tinylm.train import PREV, LATEST, lr_at, main as train_main
+
+STORIES = [f"Once upon a time a dog named Rex number {i} ran to the park and played with a ball. It was fun." for i in range(60)]
+CONVS = [[("user", f"Hello number {i}"), ("assistant", "Hi! How can I help you today?")] for i in range(30)]
+
+
+@pytest.fixture(scope="module")
+def setup(tmp_path_factory):
+    root = tmp_path_factory.mktemp("run")
+    data = str(root / "data")
+    setup_logging()
+    tok = BPETokenizer.train(STORIES + [c for conv in CONVS for _, c in conv], 300)
+    write_dataset(data, tok, STORIES[:50], STORIES[50:], CONVS[:25], CONVS[25:])
+    cfg = {"model": {"vocab_size": 300, "n_layer": 1, "n_head": 2, "dim": 32, "context_len": 32},
+           "train": {"batch_size": 4, "max_steps": 8, "warmup_steps": 2, "eval_interval": 4, "eval_batches": 2,
+                     "log_interval": 2, "ckpt_interval": 4, "sample_tokens": 5}}
+    cfg_path = str(root / "cfg.json")
+    with open(cfg_path, "w") as f:
+        json.dump(cfg, f)
+    return root, data, cfg_path
+
+
+def test_train_resume_sample(setup):
+    root, data, cfg = setup
+    out = str(root / "out")
+    base = ["--config", cfg, "--data_dir", data, "--out_dir", out]
+    train_main(base + ["--set", "train.max_steps=4"])
+    assert os.path.exists(os.path.join(out, LATEST))
+    train_main(base)  # resumes from step 4 and runs to 8
+    log = open(os.path.join(out, "train.log")).read()
+    assert "RESUMED" in log and "at step 4" in log
+    assert os.path.exists(os.path.join(out, PREV))
+    records = [json.loads(line) for line in open(os.path.join(out, "metrics.jsonl"))]
+    assert records[-1]["step"] == 8
+    sample_main(["--ckpt_dir", out, "--prompt", "Once", "--max_new_tokens", "5", "--device", "cpu"])
+
+
+def test_changed_model_config_refuses_resume(setup):
+    root, data, cfg = setup
+    out = str(root / "out2")
+    base = ["--config", cfg, "--data_dir", data, "--out_dir", out]
+    train_main(base + ["--set", "train.max_steps=4"])
+    with pytest.raises(ValueError, match="different model config"):
+        train_main(base + ["--set", "model.n_layer=2"])
+
+
+def test_vocab_mismatch_is_caught(setup):
+    root, data, cfg = setup
+    with pytest.raises(ValueError, match="vocab_size"):
+        train_main(["--config", cfg, "--data_dir", data, "--out_dir", str(root / "out3"), "--set", "model.vocab_size=400"])
+
+
+def test_lr_schedule():
+    from tinylm.config import TrainConfig
+    tc = TrainConfig(lr=1.0, min_lr_ratio=0.1, warmup_steps=10, max_steps=110)
+    assert lr_at(0, tc) == pytest.approx(0.1)          # warmup starts above zero
+    assert lr_at(9, tc) == pytest.approx(1.0)          # warmup ends at peak
+    assert lr_at(10, tc) == pytest.approx(1.0)         # cosine starts at peak
+    assert lr_at(60, tc) == pytest.approx(0.55)        # halfway: midpoint of 1.0 and 0.1
+    assert lr_at(110, tc) == pytest.approx(0.1)        # ends at min_lr
+    assert lr_at(10_000, tc) == pytest.approx(0.1)     # stays at min_lr

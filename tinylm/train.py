@@ -166,11 +166,14 @@ def main(argv=None):
     log.info(f"batch: {tc.batch_size} x {tc.grad_accum_steps} accum = {eff_batch} sequences x {mc.context_len} tokens = "
              f"{tok_per_step:,} tokens/step; chat_fraction={tc.chat_fraction}")
     total_tokens = tok_per_step * tc.max_steps
-    log.info(f"plan: {tc.max_steps} steps = {total_tokens / 1e6:.0f}M tokens "
+    log.info(f"plan: {tc.max_steps} steps = {total_tokens:,} tokens "
              f"(~{total_tokens * (1 - tc.chat_fraction) / story_tokens:.1f} passes over the story data, "
              f"~{total_tokens * tc.chat_fraction / len(data.arrays['chat_train']):.0f} passes over the chat data)")
-    log.info(f"chat conversations: p95 length {data.meta.get('chat_tokens_per_conv_p95', float('nan')):.0f} tokens "
-             f"(context_len is {mc.context_len})")
+    p95 = data.meta.get("chat_tokens_per_conv_p95", float("nan"))
+    log.info(f"chat conversations: p95 length {p95:.0f} tokens (context_len is {mc.context_len})")
+    if p95 > mc.context_len:
+        log.warning("many conversations are longer than context_len; training windows will cut them (fine, but "
+                    "the model will see fewer complete conversations)")
 
     # ---- model ------------------------------------------------------------------------------
     model = GPT(mc).to(device)
