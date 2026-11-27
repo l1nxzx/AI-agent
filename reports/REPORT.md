@@ -170,8 +170,7 @@ shopping, phone calls); see `readable_samples.txt` in the data folder.
 Training metrics: the log header is on file (run started 15:45:11 on a Tesla T4; fp16; chat_loss bot_only, chat share
 0.35; chat training data 3,245,201 tokens, chat validation data 163,444 tokens; story training data 76,760,774
 tokens; plan of about 1.1 passes over the stories and 14 over the chat data; the 95th percentile conversation is
-365 tokens, longer than the 256 context, so many conversations are cut into windows). **Still missing:** the final
-validation losses, training time and sample lines (in `runs/tiny_dailydialog_only/train.log` on Drive).
+365 tokens, longer than the 256 context, so many conversations are cut into windows).
 
 Final result (step 8000, the best checkpoint; run finished in 8.8 minutes):
 
