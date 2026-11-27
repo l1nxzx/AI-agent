@@ -98,3 +98,9 @@ def test_read_dailydialog(tmp_path):
     assert convs[0] == [("user", "Hi!"), ("assistant", "Hello.")]          # trailing user turn dropped
     assert convs[1] == [("user", "Hello."), ("assistant", "How are you?")]  # first utterance dropped variant
     assert convs[2] == [("user", "A?"), ("assistant", "B.")]
+
+
+def test_readable_samples_written(data_dir):
+    import os
+    text = open(os.path.join(data_dir, "readable_samples.txt"), encoding="utf-8").read()
+    assert "RANDOM CHAT EXAMPLES" in text and "<|user|>" in text and "Once upon a time" in text

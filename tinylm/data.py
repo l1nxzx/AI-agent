@@ -233,6 +233,23 @@ def _stats(name, docs_ids, n_chars):
     return {"docs": len(docs_ids), "tokens": total}
 
 
+def write_readable_samples(path, tok, splits, n_chat=150, n_stories=25, seed=0):
+    """Plain-text file of random training examples, decoded from the exact token ids the model trains on.
+    Open it to judge the data by eye. Role markers show who speaks: <|user|> ... <|bot|> ... <|end|>."""
+    import random
+
+    rng = random.Random(seed)
+    chat_docs, story_docs = splits["chat_train"][0], splits["stories_train"][0]
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"RANDOM CHAT EXAMPLES ({n_chat} of {len(chat_docs)} training conversations)\n")
+        f.write("Format: <|user|> text <|end|> <|bot|> text <|end|> ... <|endoftext|>\n\n")
+        for doc in rng.sample(chat_docs, min(n_chat, len(chat_docs))):
+            f.write(tok.decode(doc).replace("<|end|>", "<|end|>\n").replace("<|endoftext|>", "") + "\n" + "-" * 60 + "\n")
+        f.write(f"\n\nRANDOM STORY EXAMPLES ({n_stories} of {len(story_docs)} training stories)\n\n")
+        for doc in rng.sample(story_docs, min(n_stories, len(story_docs))):
+            f.write(tok.decode(doc).replace("<|endoftext|>", "") + "\n" + "-" * 60 + "\n")
+
+
 def write_dataset(data_dir, tok, story_train, story_val, chat_train, chat_val, sources=None, chat_mode="real"):
     """Encode all four splits, verify the encoding round-trips, write .bin files and meta.json.
     Inputs are lists of strings (stories) and lists of conversations."""
@@ -276,6 +293,7 @@ def write_dataset(data_dir, tok, story_train, story_val, chat_train, chat_val, s
     log.info("example conversation as text:\n" + tok.decode(example))
     log.info("example conversation as tokens (first 24): "
              + " ".join(repr(tok.vocab[i].decode("utf-8", "replace")) for i in example[:24]))
+    write_readable_samples(os.path.join(data_dir, "readable_samples.txt"), tok, splits)
     meta["chat_tokens_per_conv_p95"] = float(np.percentile([len(d) for d in splits["chat_train"][0]], 95))
     tok.save(os.path.join(data_dir, "tokenizer.json"))
     with open(os.path.join(data_dir, "meta.json"), "w") as f:
