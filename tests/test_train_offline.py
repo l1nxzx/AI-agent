@@ -101,3 +101,42 @@ def test_eval_chat_runs_standard_set(setup, capsys):
     result = json.load(open(os.path.join(out, "eval_chat_best.json")))
     assert len(result["records"]) == sum(r for _, _, r in STANDARD_SET)
     assert "=== identity ===" in open(os.path.join(out, "eval_chat_best.txt")).read()
+
+
+def test_early_stopping(setup, monkeypatch):
+    import torch
+    root, data, cfg = setup
+    out = str(root / "out_early")
+    calls = {"n": 0}
+    sequence = [5.0, 4.0, 4.5, 4.6, 4.7, 4.8]   # call 0 is the initial eval; then best at step 2, worse at 4 and 6
+
+    def fake_evaluate(model, data_, tc, device, ctx):
+        v = sequence[min(calls["n"], len(sequence) - 1)]
+        calls["n"] += 1
+        return {"stories": v, "chat": v, "mix": v}
+    monkeypatch.setattr("tinylm.train.evaluate", fake_evaluate)
+    base = ["--config", cfg, "--data_dir", data, "--out_dir", out]
+    over = ["--set", "train.max_steps=30", "train.eval_interval=2", "train.early_stop_patience=2",
+            "train.ckpt_interval=100", "train.warmup_steps=2", "train.log_interval=2"]
+    train_main(base + over)
+    log = open(os.path.join(out, "train.log")).read()
+    assert "EARLY STOP at step 6" in log
+    latest = torch.load(os.path.join(out, LATEST), weights_only=True)
+    assert latest["step"] == 6 and latest["early_stopped"] is True and latest["evals_since_best"] == 2
+    assert torch.load(os.path.join(out, "ckpt_best.pt"), weights_only=True)["step"] == 2
+    records = [json.loads(line) for line in open(os.path.join(out, "metrics.jsonl"))]
+    assert records[-1]["type"] == "early_stop"
+    # running it again does nothing
+    train_main(base + over)
+    assert "already stopped early at step 6" in open(os.path.join(out, "train.log")).read()
+    assert torch.load(os.path.join(out, LATEST), weights_only=True)["step"] == 6
+    # with early stopping switched off it carries on from the checkpoint
+    train_main(base + ["--set", "train.max_steps=10", "train.eval_interval=2", "train.early_stop_patience=0",
+                       "train.ckpt_interval=100", "train.warmup_steps=2"])
+    assert torch.load(os.path.join(out, LATEST), weights_only=True)["step"] == 10
+
+
+def test_early_stop_patience_validation():
+    from tinylm.config import TrainConfig
+    with pytest.raises(ValueError):
+        TrainConfig(early_stop_patience=-1).validate()

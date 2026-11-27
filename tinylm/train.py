@@ -185,6 +185,7 @@ def main(argv=None):
 
     # ---- resume -----------------------------------------------------------------------------
     step, best_val = 0, float("inf")
+    evals_since_best, early_stopped = 0, False   # early stopping state (saved in checkpoints)
     ckpt, ckpt_path = load_latest(args.out_dir, device)
     if ckpt is not None:
         if ckpt["config"]["model"] != cfg.to_dict()["model"]:
@@ -198,7 +199,13 @@ def main(argv=None):
         if scaler.is_enabled() and ckpt.get("scaler"):
             scaler.load_state_dict(ckpt["scaler"])
         step, best_val = ckpt["step"], ckpt["best_val"]
-        log.info(f"RESUMED from {ckpt_path} at step {step} (best val so far {best_val:.4f})")
+        evals_since_best = ckpt.get("evals_since_best", 0)
+        log.info(f"RESUMED from {ckpt_path} at step {step} (best val so far {best_val:.4f}, "
+                 f"{evals_since_best} evals since the best)")
+        if ckpt.get("early_stopped") and tc.early_stop_patience > 0:
+            log.info(f"this run already stopped early at step {step}; nothing to do "
+                     "(set train.early_stop_patience=0 to keep training anyway)")
+            return
         if ckpt["config"]["train"]["max_steps"] != tc.max_steps:
             log.warning(f"max_steps changed from {ckpt['config']['train']['max_steps']} to {tc.max_steps}; "
                         "the learning-rate schedule now follows the new value")
@@ -210,7 +217,8 @@ def main(argv=None):
 
     def checkpoint(name, with_optimizer=True, val_loss=None):
         payload = {"model": model.state_dict(), "config": cfg.to_dict(), "step": step, "best_val": best_val,
-                   "tokenizer_fingerprint": tok.fingerprint(), "val_loss": val_loss}
+                   "tokenizer_fingerprint": tok.fingerprint(), "val_loss": val_loss,
+                   "evals_since_best": evals_since_best, "early_stopped": early_stopped}
         if with_optimizer:
             payload["optimizer"] = optimizer.state_dict()
             payload["scaler"] = scaler.state_dict() if scaler.is_enabled() else None
@@ -249,6 +257,7 @@ def main(argv=None):
     gn_value = float("nan")
     log.info(f"training from step {step} to {tc.max_steps}")
     while step < tc.max_steps:
+        stop_now = False
         lr = lr_at(step, tc)
         for g in optimizer.param_groups:
             g["lr"] = lr
@@ -296,9 +305,12 @@ def main(argv=None):
             improved = ev["mix"] < best_val
             if improved:
                 best_val = ev["mix"]
+                evals_since_best = 0
+            else:
+                evals_since_best += 1
             log.info(f"EVAL step {step} | val stories {ev['stories']:.4f} (ppl {math.exp(ev['stories']):.1f}) | "
                      f"val chat {ev['chat']:.4f} (ppl {math.exp(ev['chat']):.1f}) | mix {ev['mix']:.4f} | "
-                     f"best {best_val:.4f}{' (new best)' if improved else ''}")
+                     f"best {best_val:.4f}{' (new best)' if improved else f' ({evals_since_best} evals without improvement)'}")
             metrics.write(type="eval", step=step, **{f"val_{k}": v for k, v in ev.items()})
             try:
                 log_samples(model, tok, tc, device)
@@ -306,13 +318,21 @@ def main(argv=None):
                 log.warning(f"sample generation failed ({e!r}); continuing")
             if improved:
                 checkpoint(BEST, with_optimizer=False, val_loss=ev["mix"])
+            if tc.early_stop_patience > 0 and evals_since_best >= tc.early_stop_patience and step < tc.max_steps:
+                stop_now = early_stopped = True
+                log.info(f"EARLY STOP at step {step}: no new best validation loss for {evals_since_best} evals in a row "
+                         f"(patience {tc.early_stop_patience}); the best checkpoint (val {best_val:.4f}) is saved as {BEST}")
+                metrics.write(type="early_stop", step=step, best_val=best_val)
             t_last = time.time()  # do not count eval time in throughput
 
-        if step % tc.ckpt_interval == 0 or step == tc.max_steps:
+        if step % tc.ckpt_interval == 0 or step == tc.max_steps or stop_now:
             checkpoint(LATEST)
             t_last = time.time()
+        if stop_now:
+            break
 
-    log.info(f"finished {tc.max_steps} steps in {(time.time() - t_start) / 60:.1f} min (this session); best val {best_val:.4f}")
+    log.info(f"finished at step {step}/{tc.max_steps}{' (early stop)' if early_stopped else ''} in "
+             f"{(time.time() - t_start) / 60:.1f} min (this session); best val {best_val:.4f}")
 
 
 if __name__ == "__main__":

@@ -53,12 +53,15 @@ class TrainConfig:
     chat_loss: str = "bot_only"     # bot_only: learn only bot replies in chat; all: learn every chat token
     dtype: str = "auto"             # auto | fp32 | fp16 | bf16 (auto: fp16 on CUDA, fp32 on CPU)
     sample_tokens: int = 80         # tokens generated for the sample shown at each eval
+    early_stop_patience: int = 3    # stop after this many evals in a row without a new best mixed val loss (0 = off)
 
     def validate(self):
         if not 0.0 <= self.chat_fraction <= 1.0:
             raise ValueError("chat_fraction must be in [0, 1]")
         if self.warmup_steps >= self.max_steps:
             raise ValueError("warmup_steps must be smaller than max_steps")
+        if self.early_stop_patience < 0:
+            raise ValueError("early_stop_patience must be >= 0")
         if self.chat_loss not in ("bot_only", "all"):
             raise ValueError("chat_loss must be bot_only or all")
         if self.dtype not in ("auto", "fp32", "fp16", "bf16"):
