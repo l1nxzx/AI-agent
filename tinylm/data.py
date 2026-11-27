@@ -1,0 +1,261 @@
+"""Data download, format checks, tokenization and the training batch sampler.
+
+Pipeline (run by `python -m tinylm.prepare_data`):
+  1. Check that each Hugging Face dataset exists and has the expected files and columns.
+  2. Download the parquet files we need.
+  3. Train the BPE tokenizer on a sample of stories plus all chat text.
+  4. Encode everything and write flat uint16 token files:
+        stories_train.bin  stories_val.bin  chat_train.bin  chat_val.bin
+     Documents are separated by <|endoftext|>. Chat turns look like:
+        <|user|> text <|end|> <|bot|> text <|end|> ... <|endoftext|>
+  5. Write meta.json with counts and the tokenizer fingerprint.
+
+No persona or system prompt is added anywhere: the chat data is used exactly as published, with the
+role names mapped to the <|user|> and <|bot|> markers.
+"""
+import json
+import os
+import time
+
+import numpy as np
+
+from .bpe import BOT, END, ENDOFTEXT, USER, BPETokenizer
+from .logutil import get_logger
+
+TINYSTORIES_REPO = "roneneldan/TinyStories"
+SMOLTALK_REPO = "HuggingFaceTB/smoltalk"
+
+TS_TRAIN_PREFIX = "data/train-"
+TS_VALID_PREFIX = "data/validation-"
+CHAT_TRAIN_FILE = "data/everyday-conversations/train-00000-of-00001.parquet"
+CHAT_TEST_FILE = "data/everyday-conversations/test-00000-of-00001.parquet"
+
+ROLE_TO_MARKER = {"user": USER, "assistant": BOT}
+BIN_FILES = ["stories_train.bin", "stories_val.bin", "chat_train.bin", "chat_val.bin"]
+
+
+# ---------------------------------------------------------------------------------------------
+# Dataset checks and download
+# ---------------------------------------------------------------------------------------------
+def check_and_locate_files(smoke=False, num_story_shards=1):
+    """Ask the Hub which files exist. Returns the file names we will download. Raises with a clear
+    message if a dataset or an expected file is missing."""
+    from huggingface_hub import HfApi
+
+    log = get_logger()
+    api = HfApi()
+    out = {}
+    for repo in (TINYSTORIES_REPO, SMOLTALK_REPO):
+        if not api.repo_exists(repo, repo_type="dataset"):
+            raise RuntimeError(f"dataset {repo} does not exist on the Hugging Face Hub")
+    ts_files = sorted(api.list_repo_files(TINYSTORIES_REPO, repo_type="dataset"))
+    st_files = set(api.list_repo_files(SMOLTALK_REPO, repo_type="dataset"))
+    train_shards = [f for f in ts_files if f.startswith(TS_TRAIN_PREFIX) and f.endswith(".parquet")]
+    valid_shards = [f for f in ts_files if f.startswith(TS_VALID_PREFIX) and f.endswith(".parquet")]
+    if not train_shards or not valid_shards:
+        raise RuntimeError(f"{TINYSTORIES_REPO}: expected parquet files under data/ but found {ts_files}")
+    for f in (CHAT_TRAIN_FILE, CHAT_TEST_FILE):
+        if f not in st_files:
+            raise RuntimeError(f"{SMOLTALK_REPO}: expected file {f} is missing")
+    out["story_valid"] = valid_shards[0]
+    out["story_train"] = train_shards[:num_story_shards] if not smoke else []
+    out["chat_train"] = CHAT_TRAIN_FILE
+    out["chat_test"] = CHAT_TEST_FILE
+    log.info(f"{TINYSTORIES_REPO}: found {len(train_shards)} train shard(s), {len(valid_shards)} validation file(s)")
+    log.info(f"{SMOLTALK_REPO}: found everyday-conversations train and test files")
+    return out
+
+
+def download(repo, filename, cache_dir):
+    from huggingface_hub import hf_hub_download
+
+    log = get_logger()
+    t0 = time.time()
+    path = hf_hub_download(repo, filename, repo_type="dataset", cache_dir=cache_dir)
+    log.info(f"downloaded {repo}/{filename} ({os.path.getsize(path) / 1e6:.1f} MB, {time.time() - t0:.1f}s)")
+    return path
+
+
+def read_story_texts(parquet_path, limit=None):
+    """Read the 'text' column of a TinyStories parquet file. Verifies the schema first."""
+    import pyarrow.parquet as pq
+
+    pf = pq.ParquetFile(parquet_path)
+    if "text" not in pf.schema_arrow.names:
+        raise RuntimeError(f"{parquet_path}: expected a 'text' column, found {pf.schema_arrow.names}")
+    texts = []
+    for batch in pf.iter_batches(batch_size=10_000, columns=["text"]):
+        for t in batch.column(0).to_pylist():
+            if t and t.strip():
+                texts.append(t.strip())
+                if limit and len(texts) >= limit:
+                    return texts
+    return texts
+
+
+def read_conversations(parquet_path):
+    """Read SmolTalk conversations as lists of (role, content). Verifies the schema, drops empty
+    messages, and drops a trailing user turn so every conversation ends with a bot reply."""
+    import pyarrow.parquet as pq
+
+    log = get_logger()
+    table = pq.read_table(parquet_path)
+    if "messages" not in table.schema.names:
+        raise RuntimeError(f"{parquet_path}: expected a 'messages' column, found {table.schema.names}")
+    convs = []
+    unknown_roles = 0
+    trailing_user = 0
+    for row in table.column("messages").to_pylist():
+        conv = []
+        for m in row:
+            if set(m) < {"role", "content"}:
+                raise RuntimeError(f"{parquet_path}: message missing role/content: {sorted(m)}")
+            if m["role"] not in ROLE_TO_MARKER:
+                unknown_roles += 1  # e.g. a system prompt; we do not add or keep any
+                continue
+            content = (m["content"] or "").strip()
+            if content:
+                conv.append((m["role"], content))
+        if conv and conv[-1][0] == "user":
+            conv.pop()
+            trailing_user += 1
+        if conv:
+            convs.append(conv)
+    log.info(f"{os.path.basename(parquet_path)}: {len(convs)} conversations, "
+             f"{unknown_roles} messages with other roles skipped, {trailing_user} trailing user turns dropped")
+    return convs
+
+
+# ---------------------------------------------------------------------------------------------
+# Encoding
+# ---------------------------------------------------------------------------------------------
+def encode_story(tok, text):
+    return tok.encode(text) + [tok.token_id(ENDOFTEXT)]
+
+
+def encode_conversation(tok, conv):
+    """[(role, content), ...] -> ids. <|user|> text <|end|> <|bot|> text <|end|> ... <|endoftext|>"""
+    ids = []
+    for role, content in conv:
+        ids.append(tok.token_id(ROLE_TO_MARKER[role]))
+        ids.extend(tok.encode(content))
+        ids.append(tok.token_id(END))
+    ids.append(tok.token_id(ENDOFTEXT))
+    return ids
+
+
+def _write_bin(path, docs_ids):
+    arr = np.fromiter((i for doc in docs_ids for i in doc), dtype=np.uint16)
+    arr.tofile(path)
+    return arr
+
+
+def _stats(name, docs_ids, n_chars):
+    lens = np.array([len(d) for d in docs_ids])
+    total = int(lens.sum())
+    get_logger().info(
+        f"{name}: {len(docs_ids)} docs, {total} tokens, tokens/doc mean={lens.mean():.0f} "
+        f"p50={np.percentile(lens, 50):.0f} p95={np.percentile(lens, 95):.0f} max={lens.max()}, "
+        f"{n_chars / max(total, 1):.2f} chars/token")
+    return {"docs": len(docs_ids), "tokens": total}
+
+
+def write_dataset(data_dir, tok, story_train, story_val, chat_train, chat_val, sources=None):
+    """Encode all four splits, verify the encoding round-trips, write .bin files and meta.json.
+    Inputs are lists of strings (stories) and lists of conversations."""
+    log = get_logger()
+    os.makedirs(data_dir, exist_ok=True)
+    if tok.vocab_size > 65535:
+        raise ValueError("vocab too large for uint16 storage")
+    meta = {"tokenizer_fingerprint": tok.fingerprint(), "vocab_size": tok.vocab_size,
+            "created": time.strftime("%Y-%m-%d %H:%M:%S"), "sources": sources or {}, "splits": {}}
+    splits = {
+        "stories_train": ([encode_story(tok, t) for t in story_train], sum(len(t) for t in story_train)),
+        "stories_val": ([encode_story(tok, t) for t in story_val], sum(len(t) for t in story_val)),
+        "chat_train": ([encode_conversation(tok, c) for c in chat_train], sum(len(x) for c in chat_train for _, x in c)),
+        "chat_val": ([encode_conversation(tok, c) for c in chat_val], sum(len(x) for c in chat_val for _, x in c)),
+    }
+    for name, (docs, n_chars) in splits.items():
+        if not docs:
+            raise RuntimeError(f"split {name} is empty")
+        meta["splits"][name] = _stats(name, docs, n_chars)
+        arr = _write_bin(os.path.join(data_dir, name + ".bin"), docs)
+        assert len(arr) == meta["splits"][name]["tokens"]
+        assert arr.max() < tok.vocab_size
+
+    # Sanity check: decoding must give back the original text exactly (byte-level BPE is lossless).
+    for text in (story_train[:200] + story_val[:50]):
+        assert tok.decode(tok.encode(text)) == text, "tokenizer round-trip failed on a story"
+    for conv in (chat_train[:50] + chat_val[:20]):
+        got = tok.decode(encode_conversation(tok, conv))
+        want = "".join(f"{ROLE_TO_MARKER[r]}{c}{END}" for r, c in conv) + ENDOFTEXT
+        assert got == want, "tokenizer round-trip failed on a conversation"
+    log.info("round-trip check passed on sample stories and conversations")
+
+    example = encode_conversation(tok, chat_train[0])
+    log.info("example conversation as text:\n" + tok.decode(example))
+    log.info("example conversation as tokens (first 24): "
+             + " ".join(repr(tok.vocab[i].decode("utf-8", "replace")) for i in example[:24]))
+    meta["chat_tokens_per_conv_p95"] = float(np.percentile([len(d) for d in splits["chat_train"][0]], 95))
+    tok.save(os.path.join(data_dir, "tokenizer.json"))
+    with open(os.path.join(data_dir, "meta.json"), "w") as f:
+        json.dump(meta, f, indent=2)
+    log.info(f"wrote {len(BIN_FILES)} token files, tokenizer.json and meta.json to {data_dir}")
+    return meta
+
+
+# ---------------------------------------------------------------------------------------------
+# Batch sampling for training
+# ---------------------------------------------------------------------------------------------
+class DataSource:
+    """Memory-mapped token files plus deterministic random batch sampling.
+
+    A training example is a random window of context_len + 1 tokens from a split. Inputs are
+    tokens [0:T], targets are tokens [1:T+1]: the model predicts each next token. Each batch is
+    drawn from stories and chat according to chat_fraction. Batches are a pure function of
+    (seed, step, micro_step), so a resumed run sees exactly the data it would have seen.
+    """
+
+    def __init__(self, data_dir, context_len, chat_fraction, seed):
+        self.context_len = context_len
+        self.chat_fraction = chat_fraction
+        self.seed = seed
+        self.arrays = {}
+        for name in BIN_FILES:
+            path = os.path.join(data_dir, name[:-4] + ".bin")
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"{path} not found; run `python -m tinylm.prepare_data` first")
+            arr = np.memmap(path, dtype=np.uint16, mode="r")
+            if len(arr) < context_len + 2:
+                raise ValueError(f"{name} has only {len(arr)} tokens, fewer than context_len+2")
+            self.arrays[name[:-4]] = arr
+        with open(os.path.join(data_dir, "meta.json")) as f:
+            self.meta = json.load(f)
+
+    def _windows(self, arr, rng, n):
+        starts = rng.integers(0, len(arr) - self.context_len - 1, size=n)
+        x = np.stack([arr[s:s + self.context_len] for s in starts]).astype(np.int64)
+        y = np.stack([arr[s + 1:s + 1 + self.context_len] for s in starts]).astype(np.int64)
+        return x, y
+
+    def train_batch(self, step, micro, batch_size):
+        import torch
+
+        rng = np.random.default_rng([self.seed, step, micro])
+        n_chat = int(rng.binomial(batch_size, self.chat_fraction))
+        parts = []
+        if batch_size - n_chat > 0:
+            parts.append(self._windows(self.arrays["stories_train"], rng, batch_size - n_chat))
+        if n_chat > 0:
+            parts.append(self._windows(self.arrays["chat_train"], rng, n_chat))
+        x = np.concatenate([p[0] for p in parts])
+        y = np.concatenate([p[1] for p in parts])
+        return torch.from_numpy(x), torch.from_numpy(y), n_chat
+
+    def val_batch(self, source, i, batch_size):
+        """Fixed validation batches (same for every eval) so val loss is comparable across steps."""
+        import torch
+
+        rng = np.random.default_rng([987654321, i])
+        x, y = self._windows(self.arrays[source + "_val"], rng, batch_size)
+        return torch.from_numpy(x), torch.from_numpy(y)

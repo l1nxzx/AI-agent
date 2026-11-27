@@ -1,0 +1,80 @@
+"""Download TinyStories + SmolTalk everyday-conversations, train the tokenizer, write token files.
+
+Usage:
+  python -m tinylm.prepare_data --data_dir data --vocab_size 2000
+  python -m tinylm.prepare_data --data_dir /tmp/smoke_data --vocab_size 512 --smoke   # tiny, for tests
+
+It is safe to run again: if meta.json exists and matches the requested vocab size, it does nothing
+(use --force to rebuild).
+"""
+import argparse
+import json
+import os
+
+# The Xet transfer backend needs extra hosts that locked-down networks may block (the download then
+# hangs silently). Plain HTTPS downloads are fast enough for these file sizes. Set before the hub
+# library is imported.
+os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+
+from .bpe import BPETokenizer
+from .data import (TINYSTORIES_REPO, SMOLTALK_REPO, check_and_locate_files, download, read_conversations,
+                   read_story_texts, write_dataset)
+from .logutil import setup_logging
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--data_dir", default="data")
+    p.add_argument("--cache_dir", default=None, help="where raw downloads go (default: <data_dir>/hf_cache)")
+    p.add_argument("--vocab_size", type=int, default=2000)
+    p.add_argument("--story_shards", type=int, default=1, help="number of TinyStories train parquet shards (~530k stories each)")
+    p.add_argument("--max_stories", type=int, default=300_000, help="cap on training stories encoded")
+    p.add_argument("--max_val_stories", type=int, default=3000)
+    p.add_argument("--tokenizer_stories", type=int, default=30_000, help="stories used to train the tokenizer (chat text is always included)")
+    p.add_argument("--smoke", action="store_true", help="use only the small TinyStories validation file, split into train/val (for quick tests)")
+    p.add_argument("--force", action="store_true")
+    args = p.parse_args(argv)
+
+    log = setup_logging(os.path.join(args.data_dir, "prepare.log"))
+    meta_path = os.path.join(args.data_dir, "meta.json")
+    if os.path.exists(meta_path) and not args.force:
+        with open(meta_path) as f:
+            meta = json.load(f)
+        if meta["vocab_size"] == args.vocab_size:
+            log.info(f"{meta_path} already exists with vocab_size={args.vocab_size}; nothing to do (use --force to rebuild)")
+            return
+        log.info(f"existing data has vocab_size={meta['vocab_size']}, requested {args.vocab_size}; rebuilding")
+
+    cache = args.cache_dir or os.path.join(args.data_dir, "hf_cache")
+    files = check_and_locate_files(smoke=args.smoke, num_story_shards=args.story_shards)
+
+    chat_train = read_conversations(download(SMOLTALK_REPO, files["chat_train"], cache))
+    chat_val = read_conversations(download(SMOLTALK_REPO, files["chat_test"], cache))
+    valid_texts = read_story_texts(download(TINYSTORIES_REPO, files["story_valid"], cache))
+
+    if args.smoke:
+        log.info("SMOKE mode: stories come from the TinyStories validation file only")
+        story_val = valid_texts[:300]
+        story_train = valid_texts[300:300 + 3000]
+    else:
+        story_train = []
+        for f in files["story_train"]:
+            story_train += read_story_texts(download(TINYSTORIES_REPO, f, cache), limit=args.max_stories - len(story_train))
+            if len(story_train) >= args.max_stories:
+                break
+        story_val = valid_texts[:args.max_val_stories]
+    log.info(f"stories: {len(story_train)} train, {len(story_val)} val; conversations: {len(chat_train)} train, {len(chat_val)} val")
+
+    tok_texts = story_train[:args.tokenizer_stories] + [c for conv in chat_train for _, c in conv]
+    log.info(f"training tokenizer on {len(tok_texts)} texts, target vocab {args.vocab_size}")
+    tok = BPETokenizer.train(tok_texts, args.vocab_size, logger=log)
+    big = sorted(range(256, tok.num_base), key=lambda i: -len(tok.vocab[i]))[:8]
+    log.info("longest learned tokens: " + ", ".join(repr(tok.vocab[i].decode("utf-8", "replace")) for i in big))
+
+    sources = {"stories": TINYSTORIES_REPO, "chat": SMOLTALK_REPO + " (everyday-conversations)",
+               "files": {k: v for k, v in files.items()}, "smoke": args.smoke}
+    write_dataset(args.data_dir, tok, story_train, story_val, chat_train, chat_val, sources)
+
+
+if __name__ == "__main__":
+    main()
