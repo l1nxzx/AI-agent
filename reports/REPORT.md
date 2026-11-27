@@ -34,7 +34,7 @@ Pending: `small`.
 | components | RMSNorm, rotary position embeddings, SwiGLU MLP, tied input/output embeddings, no biases |
 | parameters | 2,155,200 total (384,000 embedding, 1,771,008 in blocks) |
 | tokenizer | from-scratch byte-level BPE, 1739 merges + 256 bytes + 5 special tokens = 2000 |
-| stories | TinyStories, 300,000 training stories = 76,125,704 tokens; validation 3,000 stories = 690,483 tokens |
+| stories | TinyStories, 300,000 training stories (76,125,704 tokens in run 1, 76,760,774 in run 3; the tokenizer is retrained for each data build, so counts differ slightly); validation 3,000 stories (690,483 / 696,146 tokens) |
 | optimizer | AdamW, peak lr 2e-3, 300 warmup steps, cosine decay to 2e-4, weight decay 0.1, grad clip 1.0 |
 | schedule | 8,000 steps, batch 64 x 256 tokens = 16,384 tokens/step, 131,072,000 tokens in total |
 | hardware | Colab Tesla T4, fp16 with loss scaling, 1.24 GB GPU memory, about 270-290k tokens/s, 57-61 ms/step |
@@ -52,7 +52,7 @@ Differences between runs:
 
 Approximate passes over the data: run 1 saw the story data about 1.5 times and the chat data about 23 times
 (from the training log). Runs 2 and 3 saw the story data about 1.1 times; the chat data about 12 times (run 2,
-about 3.8M chat tokens) and about 14 times (run 3, about 3.2M chat tokens; derived estimate, not measured).
+about 3.8M chat tokens) and about 14 times (run 3, 3,245,201 chat tokens, from its log).
 
 ## 3. How models are evaluated
 
@@ -166,8 +166,11 @@ for training). Chat share 35%, loss on bot tokens only. Text cleanup removes Dai
 and curly quotes. The source still contains typos and, by topic, mostly practical adult scenes (banks, jobs,
 shopping, phone calls); see `readable_samples.txt` in the data folder.
 
-Training metrics: **not provided** (the final validation loss, training time and sample lines are missing from
-what was pasted; they are in `runs/tiny_dailydialog_only/train.log` on Drive).
+Training metrics: the log header is on file (run started 15:45:11 on a Tesla T4; fp16; chat_loss bot_only, chat share
+0.35; chat training data 3,245,201 tokens, chat validation data 163,444 tokens; story training data 76,760,774
+tokens; plan of about 1.1 passes over the stories and 14 over the chat data; the 95th percentile conversation is
+365 tokens, longer than the 256 context, so many conversations are cut into windows). **Still missing:** the final
+validation losses, training time and sample lines (in `runs/tiny_dailydialog_only/train.log` on Drive).
 
 Sampling settings during chat were not recorded (notebook default 0.5 / 20). Full transcript:
 `transcripts/tiny_dailydialog_only.txt`. Item-level scores: `scores/tiny_dailydialog_only.json`
