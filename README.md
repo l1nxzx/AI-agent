@@ -106,7 +106,7 @@ emitted when explicitly allowed, so dataset text can never inject them.
 * Chat source: `HuggingFaceTB/smoltalk`, subset `everyday-conversations` (parquet, column `messages`, a list
   of `{role, content}` with roles `user` and `assistant`).
 
-Two chat modes (`prepare_data --chat_mode`):
+Three chat modes (`prepare_data --chat_mode`):
 
 * `persona` (default): a small model cannot answer open questions, and trained on broad chat it invents
   confident nonsense. So the chat data is a hand-written persona bank (`persona.py`): a very small,
@@ -116,6 +116,12 @@ Two chat modes (`prepare_data --chat_mode`):
   turn conversations. Two parts are real data: "tell me a story" replies are real short TinyStories, and
   questions the bot cannot answer are real user messages from everyday-conversations, always answered
   with an honest "I am too small to know that". Validation uses held-out user phrasings.
+* `dailydialog`: only real, human-written dialogue, nothing authored. It combines DailyDialog (about 13k
+  everyday dialogues, read from the Hub's parquet conversion of `roskoN/dailydialog`; each dialogue is
+  also used with its first utterance dropped so the bot side learns from both speakers) with
+  everyday-conversations. Text is cleaned (pre-tokenized spacing, curly quotes). Check the DailyDialog
+  license before reuse; I believe it is non-commercial. In a short CPU test the replies were fluent,
+  short and human-sounding but mostly off-topic; a 2M model cannot hold a real conversation.
 * `real`: the everyday-conversations data as published.
 
 In both modes the chat loss is computed on the bot's words only (`train.chat_loss = "bot_only"`).
@@ -186,7 +192,7 @@ Things that indicate a healthy run:
 ## Known limits and notes
 
 * The real everyday-conversations set is small (about 2,200 conversations, 570k tokens) and broad, so
-  a 2M model trained on it only invents topical nonsense. That is why `persona` is the default mode.
+  a 2M model trained on it only invents topical nonsense. That is why the `persona` mode exists.
   The persona bot is deliberately narrow: it will chat, tell stories and jokes, and admit it is small,
   but it knows very little. That is what makes tiny models feel coherent.
 * Persona data is hand-written and template-expanded, so it is not a 'download from Hugging Face' dataset.
