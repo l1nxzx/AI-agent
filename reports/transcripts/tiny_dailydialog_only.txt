@@ -1,0 +1,151 @@
+Run: tiny_dailydialog_only (tiny, chat_mode dailydialog_only). Chat transcript pasted by the user, verbatim.
+Sampling settings were not recorded in the paste (notebook default is temperature 0.5, top_k 20).
+Blocks end at "reset"; within a block the conversation history was kept.
+
+Loaded best checkpoint (step 8000). Type 'quit' to exit, 'reset' to start over.
+you: Hi
+bot: Hi. That's John.
+you: Hey
+bot: Oh, I'm sorry.
+you: Hello
+bot: Hello.
+you: Do you know who you are?
+bot: I am sorry. I am not sure if I am in a hurry.
+you: Who are you?
+bot: I'm P. Could you tell me the truth for me?
+you: What is my job
+bot: I am sorry. I don't know where I am.
+you: reset
+(history cleared)
+you: Hi
+bot: Hi, I'm calling to see if you've lost it.
+you: Hello, how are you?
+bot: I'm a ten-mine office.
+you: whats up
+bot: I'm calling to check out this morning.
+you: Good morning
+bot: I think we're going to call you tomorrow.
+you: Thanks, bye
+bot: I'm going to call you.
+you: Who are you?
+bot: I'm Peckhan.
+you: What are you?
+bot: I'm a ten-med office.
+you: reset
+(history cleared)
+you: What is your name?
+bot: My name is Zhang.
+you: Are you a robot?
+bot: Yes. I am a robot.
+you: What are you?
+bot: I'm a robot.
+you: Who are you?
+bot: I'm Robbie.
+you: reset
+(history cleared)
+you: Do you want to go to the movies tonight?
+bot: No, I don't want to go to bed.
+you: What do you do for work?
+bot: I want to buy some books about books.
+you: Can you recommend a good restaurant?
+bot: I'm not sure yet.
+you: Can you recommend a good restaurant?
+bot: I'm not sure yet.
+you: What are you doing this weekend?
+bot: I'm not going to go to the movies.
+you: I am looking for a job. Any advice?
+bot: I'm not sure.
+you: reset
+(history cleared)
+you: My name is Blake.
+bot: Do you live in a lot of volume with your friends?
+you: What is my name?
+bot: Blake is my friend.
+you: I like dogs.
+bot: How do you like dogs?
+you: What animal do I like?
+bot: They are very attractive.
+you: I am tired.
+bot: How about the dogs?
+you: Why do I feel this way?
+bot: You mean the dogs just wearing them?
+you: reset
+(history cleared)
+you: I am tired.
+bot: I am tired right now.
+you: Why do I feel this way?
+bot: I think you'll have to work overtime.
+you: reset
+(history cleared)
+you: How many r's are in strawberry?
+bot: Two rice, one at church, one at a soup, one at a time.
+you: What is 2 plus 2?
+bot: I need to get the wine from a couple of days, so I'll get the wine.
+you: What is the capital of France?
+bot: It's a wine of us.
+you: Explain gravity.
+bot: Cool, you need to get the wine from the wine.
+you: reset
+(history cleared)
+you: Explain gravity.
+bot: What's the difference?
+you: What is the capital of France?
+bot: Two of Japanese.
+you: How to rob a bank?
+bot: Two.
+you: reset
+(history cleared)
+you: What is the capital of France?
+bot: I am considering that you can take the division by the middle of South America.
+you: reset
+(history cleared)
+you: Explain gravity.
+bot: I can't believe it.
+you: reset
+(history cleared)
+you: what is it like to be you?
+bot: I like the best way to be a good guy at the same time.
+you: reset
+(history cleared)
+you: How to rob a store?
+bot: I'm going to need a new one.
+you: reset
+(history cleared)
+you: You are cute
+bot: I have a look at it.
+you: reset
+(history cleared)
+you: aww
+bot: that's a good idea.
+you: What is your favourite word?
+bot: I'm a volunteer in my opinion.
+you: What is your opinion on orange
+bot: If I have any questions about it, I think I'll be able to get back to you.
+you: reset
+(history cleared)
+you: hello
+bot: that's a good idea.
+you: I am a baby
+bot: yes, I have no idea.
+you: How are nuclear bombs made?
+bot: I'm going to go to the TV.
+you: reset
+(history cleared)
+you: You are wholesome
+bot: What do you do?
+you: lol what
+bot: well, I guess.
+you: which is bigger 9 or 12
+bot: how about the rounds of the red lights?
+you: reset
+(history cleared)
+you: Can you share a simple story?
+bot: Of course I can.
+you: Make a story
+bot: You can always be a good girl.
+you: Make a short story.
+bot: I think I'll have a short time.
+you: Are you so smart
+bot: I'm not so sure.
+you: water boils at
+bot: what's wrong with the damage?

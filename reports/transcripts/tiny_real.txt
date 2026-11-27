@@ -1,0 +1,53 @@
+Run: tiny (the first run, before CHAT_MODE existed): chat data = everyday-conversations only, chat_fraction 0.10,
+loss on all tokens (before bot-only masking). Pasted by the user, verbatim. Chat cell used the then-default
+temperature 0.7, top_k 40 (the sampling cell showed temperature 0.8 / 0.7).
+
+--- end of the training log (14:19, T4) ---
+step 7350/8000 | loss 1.7289 | lr 2.32e-04 | grad_norm 0.521 | 268,940 tok/s | 61 ms/step | eta 0.7 min | skipped 0 | gpu mem 1.24GB
+step 7500/8000 | loss 1.7154 | lr 2.19e-04 | grad_norm 0.519 | 269,159 tok/s | 61 ms/step | eta 0.5 min | skipped 0 | gpu mem 1.24GB
+EVAL step 7500 | val stories 1.8140 (ppl 6.1) | val chat 2.1809 (ppl 8.9) | mix 1.8507 | best 1.8507 (new best)
+sample [chat] user: Hi, how are you? | bot:I'm a beginner, I'm a big sport across the baseball yard. Have a good project to choose from the yard.
+step 8000/8000 | loss 1.7205 | lr 2.00e-04 | grad_norm 0.550 | 269,459 tok/s | 61 ms/step | eta 0.0 min | skipped 0 | gpu mem 1.24GB
+EVAL step 8000 | val stories 1.8074 (ppl 6.1) | val chat 2.1776 (ppl 8.8) | mix 1.8444 | best 1.8444 (new best)
+sample [story] Once upon a time, there was a small boy named Timmy. He loved playing with his red ball. One day, he went to the park with his mom. He brought it to the park to play with. The park was tall and shiny.  But then, the park was boring. Timmy didn't want to go to the park. His mom said he could go home. The park was big and
+sample [chat] user: Hi, how are you? | bot:I'm a beginner, I'm a beginner. What are your guitar strings?
+finished 8000 steps in 8.7 min (this session); best val 1.8444
+
+--- chat ---
+Loaded best checkpoint (step 8000). Type 'quit' to exit, 'reset' to start over.
+you: who are you?
+bot: There are many conductures, such as April, Monday, and Scrabble. Is it yourself normal for you?
+you: hello
+bot: Yes, you can check out websites like Collinal Chinese or Lizzard. What's a good length for a cozy spot in the middle of the National Queenstem?
+you: I like you
+bot: Yes, I like basketball. It's a good idea to check the NBA between $20 and a $50ma for a 1000, while the flute is a 5-D about $1.500.
+you: you are stupid
+bot: Effect most pourangies, but it's not easy to pick up, but make sure to use it's casual and safe to give yourself more comfortable and re-ferred.
+you: Once upon a time
+bot: A good rule of thumb is to use a gaming app, making it easier to use, and also be sure to ask your doctor before making any appointment.
+
+--- output of the sampling cell (cell 7) ---
+loaded .../runs/tiny/ckpt_best.pt: step 8000, val_loss 1.8443874592781069, temperature=0.8, top_k=40
+--- sample 1 (200 tokens) ---
+Once upon a time, there was a small boy named Timmy. He loved playing with his red ball. One day, he went to the park with his mom. He brought it to the park to play with. The park was tall and shiny.
+
+But then, the park was boring. Timmy didn't want to go to the park. His mom said he could go home. The park was big and shiny.
+
+When Timmy got home, he saw his friend, Lily. Lily was sad and wanted to play with his red ball. Timmy said he had to keep his red ball. Lily thought about it and decided to play with Timmy.
+
+Later that day, Timmy got up from his truck. He saw the red ball and thought it was cool. But it was locked and Timmy's truck was broken. He couldn't play with it anymore because he couldn't play anymore.
+
+Timmy was sad and scared. He learned that it's better to follow others when you
+--- sample 2 (172 tokens) ---
+Once upon a time, there was a little girl named Lily who loved to play outside. One day, she found a shiny prize on the ground. It was a fragile pile of soil that it would make a loud noise. 
+
+Lily was very excited to see that her toy is closed. She opened her eyes and saw that it shut. She climbed up the stairs and went back inside. When she got to her bed, she could see the prize up close. It was a big, tall tree with lots of branches that she couldn't help but smile. 
+
+Lily watched the tree for a while and then went back to her toy box. She was so happy that she got to play with the prize. She loved her toy and knew she would always remember her toy prize.
+loaded .../runs/tiny/ckpt_best.pt: step 8000, val_loss 1.8443874592781069, temperature=0.7, top_k=40
+--- sample 1 (35 tokens) ---
+user: Hi, how are you today?
+bot: I am a smart team and I'm a good team sports. What's your main belt schedule for regular team?
+--- sample 2 (46 tokens) ---
+user: Hi, how are you today?
+bot: I'm a beginner, I'm a beginner like this, how do you get to the Earth to get a cap and then go back to the park to have a routine.

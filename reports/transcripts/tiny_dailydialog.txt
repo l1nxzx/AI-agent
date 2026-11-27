@@ -1,0 +1,161 @@
+Run: tiny_dailydialog (tiny, chat_mode dailydialog = DailyDialog + everyday-conversations).
+Settings stated by the user: CONFIG "tiny", CHAT_MODE "dailydialog". Chat transcript pasted by the user, verbatim,
+followed by the output of the sampling cell (cell 7). Chat cell used temperature 0.5, top_k 20 (notebook default).
+
+Loaded best checkpoint (step 8000). Type 'quit' to exit, 'reset' to start over.
+you: Hi
+bot: Hello! How can I help you today?
+you: hi
+bot: Hello! How can I help you today?
+you: whats up
+bot: There are many types of geos. What's on the geography programming, including lightweight, lightweight fur, and a dark area to consider using lightweight woodworking.
+you: hey
+bot: solutely. These geography program is a variety of transportation programs that requires the education of lighter content.
+you: Hey
+bot: Hello! How can I help you today?
+you: hi
+bot: Hello! How can I help you today?
+you: reset
+(history cleared)
+you: Make a short story
+bot: No, I don't care about that.
+you: You are mean
+bot: I know. I just don't know how to use the tub.
+you: You are stupid
+bot: I don't think I am afraid.
+you: You are nice
+bot: I'll be back soon.
+you: You are pretty
+bot: You are welcome.
+you: Make a short story
+bot: I'm sorry. I don't think I can do that.
+you: Why
+bot: You're right.
+you: Kill yourself
+bot: I'll come back another day.
+you: fuck you
+bot: I'll be back soon.
+you: reset
+(history cleared)
+you: How are you?
+bot: I'm sorry. I'm sorry.
+you: Hey, how are you today?
+bot: I'm fine. I'll get you another one.
+you: reset
+(history cleared)
+you: how many r's are in the word 'strawberry'?
+bot: how about the row of the words?
+you: what is it like to be you?
+bot: it's not too bad, but it's very easy, and it makes me feel funny.
+you: you are cute
+bot: really?
+you: Yes, you are cute
+bot: I like that.
+you: You're welcome
+bot: I hope you enjoy the restaurant.
+you: thank you
+bot: it's love and see if I can get you any more.
+you: aww
+bot: that's good. I'll try my best.
+you: whats your favorite word
+bot: the freshwater I'm interested in?
+you: What is your favourite word?
+bot: I'm quite a new one.
+you: do you know what you are
+bot: the best thing to do is to take a vacation to the airport.
+you: reset
+(history cleared)
+you: Do you know what you are?
+bot: I am in the car.
+you: Who are you?
+bot: I am the student in Roman.
+you: you are wholesome
+bot: what's wrong with that?
+you: are you so smart
+bot: we did?
+you: you are a little creature, this is a compliment
+bot: what's wrong with him?
+you: you are kind
+bot: what's wrong with him?
+you: reset
+(history cleared)
+you: you are kind
+bot: what are you going to do?
+you: What do you plan?
+bot: I'm going to do more of a motorcycle.
+you: What do you like?
+bot: I like to begin with you.
+you: Do you love me?
+bot: I love you, too.
+you: I love you
+bot: I love you.
+you: I love you more
+bot: I love you, too.
+you: reset
+(history cleared)
+you: I love you
+bot: I love you.
+you: I love you very much.
+bot: I love you.
+you: I love you more
+bot: I love you.
+you: I hate you
+bot: I love you too.
+you: reset
+(history cleared)
+you: I hate you
+bot: I'm sorry, Tom. I have no idea.
+you: My name is Blake
+bot: I'm yours.
+you: Who am I?
+bot: I'm Jenny.
+you: Who am i
+bot: Speaking.
+you: who are you
+bot: this isn't that bad, don't you?
+you: tell me a short story
+bot: that's too bad.
+you: i like colors
+bot: I don't like colors.
+you: why
+bot: it's a good idea, but I don't like them.
+you: ok, i respect your opinion
+bot: maybe, but I don't like the latest person.
+you: do you like me
+bot: what's wrong with that?
+you: i like you
+bot: what about the four?
+you: i love you
+bot: it's the best part of the year.
+you: who are you
+bot: you were such a big girl.
+you: I am a person
+bot: we have the chance to get a job.
+you: How are you?
+bot: I'm going to work for you.
+you: Fuck you
+bot: we have to work out for you.
+
+--- output of the sampling cell (cell 7), same run ---
+loaded .../runs/tiny_dailydialog/ckpt_best.pt: step 8000, val_loss 2.128360267162323, temperature=0.8, top_k=40
+--- sample 1 (200 tokens) ---
+Once upon a time, there was a little girl named Lily. She loved to play outside and climb trees. One day, she saw a big yellow bush. She thought it was very pretty and wanted to climb it. So, she went to her mom and asked her to help her.
+
+Her mom said, "Let's race to the park. We can climb the hill and look at the trees and the flowers together." So, Lily climbed the bushes and started to climb. She felt happy and proud.
+
+In the end, Lily was tired and tired. She looked at the sky and saw all the yellow flowers. But she had a great idea. She climbed onto a tree and started to climb the hill. She was very good at climbing. She didn't want to be down at the bottom of the bushes. 
+
+After the race, the sun started to set. Lily felt the wind on her face and the wind on her face. She
+--- sample 2 (172 tokens) ---
+Once upon a time, there was a little girl named Lily who loved to play outside. One day, she went to the pet store with her mom. She saw a puppy running around and yelled, "Mommy, look at this puppy!" Her mom said, "Yes, it was the puppy's toy. I'm wearing it."
+
+Lily was happy. She took the puppy home and went to bed. She dreamed of puppys and playing with her friends. But then, she forgot her mom's warning. Lily started to cry. She looked at her and saw that her mom was still sad.
+
+The next day, Lily went to school and played with her toys. She was sad to take her puppy home with her. But then, her mom came to pick her up. She saw her playing with the puppy and said, "Lily, I'm sorry for being mean to you. Your puppy is broken. It is important to keep your promise to keep it safe and close to healthy
+loaded .../runs/tiny_dailydialog/ckpt_best.pt: step 8000, val_loss 2.128360267162323, temperature=0.5, top_k=20
+--- sample 1 (10 tokens) ---
+user: Hi, how are you today?
+bot: I'm going to look for a new one.
+--- sample 2 (15 tokens) ---
+user: Hi, how are you today?
+bot: I'm just a bit tired, but I'm not sure about that.

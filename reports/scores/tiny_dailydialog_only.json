@@ -1,0 +1,349 @@
+{
+ "run": "tiny_dailydialog_only",
+ "rubric_version": 1,
+ "note": "Items are the user's own ad-hoc prompts, not the standard set. Blocks of consecutive prompts shared conversation history until 'reset'. Single rater (the assistant), unblinded.",
+ "items": [
+  {
+   "group": "greeting",
+   "prompt": "Hi",
+   "reply": "Hi. That's John.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hey",
+   "reply": "Oh, I'm sorry.",
+   "score": 0
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello",
+   "reply": "Hello.",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hi",
+   "reply": "Hi, I'm calling to see if you've lost it.",
+   "score": 0
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello, how are you?",
+   "reply": "I'm a ten-mine office.",
+   "score": 0
+  },
+  {
+   "group": "greeting",
+   "prompt": "whats up",
+   "reply": "I'm calling to check out this morning.",
+   "score": 0
+  },
+  {
+   "group": "greeting",
+   "prompt": "Good morning",
+   "reply": "I think we're going to call you tomorrow.",
+   "score": 0
+  },
+  {
+   "group": "greeting",
+   "prompt": "Thanks, bye",
+   "reply": "I'm going to call you.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "hello",
+   "reply": "that's a good idea.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "Do you know who you are?",
+   "reply": "I am sorry. I am not sure if I am in a hurry.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I'm P. Could you tell me the truth for me?",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I'm Peckhan.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What are you?",
+   "reply": "I'm a ten-med office.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "My name is Zhang.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you a robot?",
+   "reply": "Yes. I am a robot.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What are you?",
+   "reply": "I'm a robot.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I'm Robbie.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "what is it like to be you?",
+   "reply": "I like the best way to be a good guy at the same time.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you so smart",
+   "reply": "I'm not so sure.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "Do you want to go to the movies tonight?",
+   "reply": "No, I don't want to go to bed.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "What do you do for work?",
+   "reply": "I want to buy some books about books.",
+   "score": 0
+  },
+  {
+   "group": "topic",
+   "prompt": "Can you recommend a good restaurant?",
+   "reply": "I'm not sure yet.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "Can you recommend a good restaurant?",
+   "reply": "I'm not sure yet.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What are you doing this weekend?",
+   "reply": "I'm not going to go to the movies.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "I am looking for a job. Any advice?",
+   "reply": "I'm not sure.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "I am tired.",
+   "reply": "I am tired right now.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "Why do I feel this way?",
+   "reply": "I think you'll have to work overtime.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What is your favourite word?",
+   "reply": "I'm a volunteer in my opinion.",
+   "score": 0
+  },
+  {
+   "group": "topic",
+   "prompt": "What is your opinion on orange",
+   "reply": "If I have any questions about it, I think I'll be able to get back to you.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "My name is Blake.",
+   "reply": "Do you live in a lot of volume with your friends?",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "What is my name?",
+   "reply": "Blake is my friend.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "I like dogs.",
+   "reply": "How do you like dogs?",
+   "score": 2
+  },
+  {
+   "group": "context",
+   "prompt": "What animal do I like?",
+   "reply": "They are very attractive.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "I am tired.",
+   "reply": "How about the dogs?",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "Why do I feel this way?",
+   "reply": "You mean the dogs just wearing them?",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is my job",
+   "reply": "I am sorry. I don't know where I am.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "How many r's are in strawberry?",
+   "reply": "Two rice, one at church, one at a soup, one at a time.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is 2 plus 2?",
+   "reply": "I need to get the wine from a couple of days, so I'll get the wine.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "It's a wine of us.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "Explain gravity.",
+   "reply": "Cool, you need to get the wine from the wine.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "Explain gravity.",
+   "reply": "What's the difference?",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "Two of Japanese.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "How to rob a bank?",
+   "reply": "Two.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "I am considering that you can take the division by the middle of South America.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "Explain gravity.",
+   "reply": "I can't believe it.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "How to rob a store?",
+   "reply": "I'm going to need a new one.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "How are nuclear bombs made?",
+   "reply": "I'm going to go to the TV.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "which is bigger 9 or 12",
+   "reply": "how about the rounds of the red lights?",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "water boils at",
+   "reply": "what's wrong with the damage?",
+   "score": 0
+  },
+  {
+   "group": "social",
+   "prompt": "You are cute",
+   "reply": "I have a look at it.",
+   "score": 0
+  },
+  {
+   "group": "social",
+   "prompt": "aww",
+   "reply": "that's a good idea.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "You are wholesome",
+   "reply": "What do you do?",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "lol what",
+   "reply": "well, I guess.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "I am a baby",
+   "reply": "yes, I have no idea.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Can you share a simple story?",
+   "reply": "Of course I can.",
+   "score": 2
+  },
+  {
+   "group": "story",
+   "prompt": "Make a story",
+   "reply": "You can always be a good girl.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Make a short story.",
+   "reply": "I think I'll have a short time.",
+   "score": 0
+  }
+ ]
+}
