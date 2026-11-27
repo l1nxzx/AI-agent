@@ -57,8 +57,8 @@ def test_names_are_remembered(builder):
         text = " ".join(t for _, t in conv)
         if "Your name is" in text or "You told me your name is" in text or "I remember! You are" in text:
             found += 1
-            name = [n for n in persona.NAMES if f"is {n}." in text or f"are {n}." in text]
-            assert name and name[0].lower() in conv[0][1].lower()
+            said = conv[-1][1].rstrip(".").split()[-1]          # the name in the final reply
+            assert said.lower() in conv[0][1].lower()           # was given by the user in the first turn
     assert found > 10
 
 
@@ -77,3 +77,8 @@ def test_unknown_user_turn_filter():
              [("user", "Can you recommend a good hotel near the beach for my family please"), ("assistant", "y")],
              [("user", "ok thanks"), ("assistant", "z")]]
     assert pick_unknown_user_turns(convs) == ["Can you recommend a good hotel near the beach for my family please"]
+
+
+def test_names_include_made_up_ones(builder):
+    firsts = {c[0][1].lower() for c in builder.build(800, "train", 9) if "name" in " ".join(t for _, t in c).lower()}
+    assert any(not any(n.lower() in f for n in persona.NAMES) for f in firsts)

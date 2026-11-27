@@ -279,6 +279,18 @@ WHAT_IS_USER = ["What is {x}?", "what is {x}", "Can you tell me what {x} is?", "
 NAMES = ["Anna", "Ben", "Carla", "Dan", "Eva", "Finn", "Grace", "Hugo", "Ivy", "Jack", "Kim", "Leo",
          "Mia", "Noah", "Olivia", "Pablo", "Quinn", "Rosa", "Sam", "Tina", "Uma", "Victor", "Will",
          "Zoe", "Lily", "Tim", "Sue", "Max", "Amy", "Tom"]
+SYLLABLES = ["da", "na", "li", "ro", "mi", "ka", "to", "sa", "re", "lu", "bo", "ni", "fa", "ve", "jo", "ma",
+             "zu", "ke", "ti", "po", "ri", "ha", "wi", "xe", "yu", "do", "la", "mo", "su", "be"]
+
+
+def make_name(rng):
+    """Half of the names are from NAMES, half are made-up pronounceable names (Dana, Kamiro, ...), so the
+    model must learn to COPY the name it was given rather than pick one it has memorized."""
+    if rng.random() < 0.5:
+        return rng.choice(NAMES)
+    return "".join(rng.choice(SYLLABLES) for _ in range(rng.choice([2, 2, 3]))).capitalize()
+
+
 NAME_INTRO_USER = ["My name is {n}.", "I am {n}.", "Hi, I am {n}", "Call me {n}", "I'm {n}.", "You can call me {n}"]
 NAME_INTRO_BOT = ["Nice to meet you, {n}! What can I do for you?", "Hello, {n}. It is nice to meet you.",
                   "Hi {n}! I am happy to chat with you."]
@@ -399,7 +411,7 @@ class PersonaBuilder:
         raise KeyError(name)
 
     def name_conversation(self, rng, split):
-        n = rng.choice(NAMES)
+        n = make_name(rng)
         turns = [(rng.choice(split_phrasings(NAME_INTRO_USER, split)).format(n=n), rng.choice(NAME_INTRO_BOT).format(n=n))]
         if rng.random() < 0.6:
             name = rng.choice([x for x in self.names if x not in ("story",)])
