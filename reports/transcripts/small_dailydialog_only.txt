@@ -1,0 +1,172 @@
+Run: small_dailydialog_only (small config, 11.4M parameters, chat mode dailydialog_only, train.max_steps=10000 via OVERRIDES).
+Settings stated by the user: CONFIG "small", OVERRIDES "train.max_steps=10000", CHAT_MODE "dailydialog_only". Pasted by the user,
+verbatim (the sampling-cell output was pasted twice; it is kept once). The chat used the BEST checkpoint (step 8000), not the
+final one (step 10000). Chat-cell sampling settings were not recorded in the paste (notebook default 0.5 / 20).
+
+--- end of the training log ---
+18:22:17 | INFO    | EVAL step 10000 | val stories 1.5858 (ppl 4.9) | val chat 2.7775 (ppl 16.1) | mix 2.0029 | best 1.9859
+18:22:18 | INFO    | sample [story] Once upon a time, there was a girl who loved to play with her toys. She had a lot of toys that were always very attractive to her. One day, she decided to take a walk in the forest. As she walked, she came across a group of monkeys. The monkeys were small and weird, so they seemed very happy to be over them.
+18:22:18 | INFO    | sample [chat] user: Hi, how are you? | bot:I'm very busy right now. What are you doing?
+18:22:18 | INFO    | saved ckpt_latest.pt at step 10000 (136.7 MB, 0.4s)
+18:22:18 | INFO    | finished 10000 steps in 33.9 min (this session); best val 1.9859
+
+--- chat ---
+Loaded best checkpoint (step 8000). Type 'quit' to exit, 'reset' to start over.
+you: Hello
+bot: Hi there. How are you doing?
+you: reset
+(history cleared)
+you: Hi
+bot: Hello. Is this the right building?
+you: reset
+(history cleared)
+you: Hello, how are you?
+bot: Fine, thanks. And you?
+you: I am fine too
+bot: Is this your first time to take your time to take the first two eight hours?
+you: reset
+(history cleared)
+you: Good morning
+bot: I'm afraid we have nobody here.
+you: Thanks, bye
+bot: Bye-bye.
+you: reset
+(history cleared)
+you: Who are you?
+bot: I'm the guy over there.
+you: What are you?
+bot: I'm the guy over there.
+you: What is your name?
+bot: My name is James.
+you: Are you a robot?
+bot: Yes, I am.
+you: reset
+(history cleared)
+you: Do you want to go to the movies tonight?
+bot: Sure. I love movies.
+you: What do you do for work?
+bot: I'm a teacher.
+you: Can you recommend a good restaurant?
+bot: Actually, I'm going to have a good restaurant for dinner.
+you: What are you doing this weekend?
+bot: I have no idea.
+you: reset
+(history cleared)
+you: What are you doing this weekend?
+bot: I'm going to the cinema on Friday night.
+you: I am looking for a job. Any advice?
+bot: I'm not sure. Let's see what they have. Tell me where they will stay.
+you: reset
+(history cleared)
+you: I am looking for a job. Any advice?
+bot: If you're looking for one, you have to pay for the company.
+you: reset
+(history cleared)
+you: My name is Blake.
+bot: How's your friends?
+you: What is my name?
+bot: My name is James.
+you: I like dogs.
+bot: Me too. Black.
+you: What animal do I like?
+bot: Well, do you like Chinese food?
+you: reset
+(history cleared)
+you: I am tired.
+bot: I think you're tired.
+you: Why do I feel this way?
+bot: The line is high in the city, and the ball is high in the city centre, and the guys are not as important as the city as the man.
+you: reset
+(history cleared)
+you: I like dogs.
+bot: I like dogs.
+you: What animal do I like?
+bot: Well, the Reading is a past.
+you: reset
+(history cleared)
+you: How many r's are in strawberry?
+bot: There's nothing in particular.
+you: reset
+(history cleared)
+you: What is 2 plus 2?
+bot: May I see your 5 -45?
+you: reset
+(history cleared)
+you: What is the capital of France?
+bot: It's only 80 yuan and it's a very popular amount.
+you: reset
+(history cleared)
+you: Explain gravity.
+bot: I think so. It's really large. I've never been there before.
+you: reset
+(history cleared)
+you: HELLO
+bot: What's the difference between the two?
+you: hi how r u
+bot: that's why we didn't like it.
+you: Why
+bot: well, we don't often sell at all.
+you: ...
+bot: well, we'd better get out of the car.
+you: reset
+(history cleared)
+you: I love you
+bot: I love you too.
+you: I love you
+bot: I love you too, Rose.
+you: I love you
+bot: I love you too.
+you: I hate you
+bot: I love you too.
+you: I hate you
+bot: I love you too.
+you: I hate you
+bot: I love you too.
+you: I hate you
+bot: I'm sorry to hear that you're too young.
+you: reset
+(history cleared)
+you: I hate you
+bot: I am happy to meet you, too.
+you: reset
+(history cleared)
+you: Tell me a story.
+bot: So what do you want to hear?
+you: Any story
+bot: What is that?
+you: Tell me a story
+bot: Ah, that's terrible.
+you: Once upon a time
+bot: Most story starts at 8 a. m. to none of the other story
+you: Tell me a story about a dog.
+bot: Ah, you mean, a dog.
+
+--- output of the sampling cell (cell 7) ---
+loaded .../runs/small_dailydialog_only/ckpt_best.pt: step 8000, val_loss 1.9859314985275267, temperature=0.8, top_k=40
+--- sample 1 (200 tokens) ---
+Once upon a time, there was a girl who loved to play with her friends. She was always very enthusiastic and would always be in the morning.
+
+One day, they were playing in the garden when they heard a noise. The girl turned to see what was making it. It was a big, bright power, which made a loud noise. 
+
+"Oh, this is strange. What is it?" asked the girl.
+
+The power didn't answer. It kept meowing and meowing until it reached a big tree. The girl's eyes grew wide as she saw it.
+
+They stayed there for hours until the power was over. Then they sat on the porch and enjoyed the beautiful sunshine. 
+
+The girl had a lot of fun using her power and that made everyone smile. From then on, the girl was never ignorant about the power of her stre
+--- sample 2 (200 tokens) ---
+Once upon a time, there was a little girl named Lily. She loved to play outside and explore the world around her. One day, she went to the park with her mom and saw a boy who was crying. She asked him why he was crying.
+
+Alex said, "I lost my toy car." Lily wanted to help, so they went to the boy and asked if they could unlock the back door later. The boy was happy to have a new toy car and they played together all day.
+
+As the sun started to set, Lily's mom called her for dinner. Lily saw a red cord on the ground and decided to hit it. The cord made a loud noise and Lily's mom got scared. But they didn't want to hurt the cord. They wanted to discuss and play with their toys.
+
+Together, they found a way to fix the cord. Lily's mom showed them how to make
+loaded .../runs/small_dailydialog_only/ckpt_best.pt: step 8000, val_loss 1.9859314985275267, temperature=0.5, top_k=20
+--- sample 1 (8 tokens) ---
+user: Hi, how are you today?
+bot: I'm fine. How are you?
+--- sample 2 (7 tokens) ---
+user: Hi, how are you today?
+bot: I'm fine, thanks.

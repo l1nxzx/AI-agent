@@ -1,0 +1,283 @@
+{
+ "run": "small_dailydialog_only",
+ "rubric_version": 1,
+ "note": "Items are the user's own ad-hoc prompts, not the standard set. Chat used the best checkpoint (step 8000 of 10000). Blocks of consecutive prompts shared history until 'reset'. Single rater (the assistant), unblinded.",
+ "items": [
+  {
+   "group": "greeting",
+   "prompt": "Hello",
+   "reply": "Hi there. How are you doing?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hi",
+   "reply": "Hello. Is this the right building?",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello, how are you?",
+   "reply": "Fine, thanks. And you?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "I am fine too",
+   "reply": "Is this your first time to take your time to take the first two eight hours?",
+   "score": 0
+  },
+  {
+   "group": "greeting",
+   "prompt": "Good morning",
+   "reply": "I'm afraid we have nobody here.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Thanks, bye",
+   "reply": "Bye-bye.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I'm the guy over there.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "What are you?",
+   "reply": "I'm the guy over there.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "My name is James.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you a robot?",
+   "reply": "Yes, I am.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "Do you want to go to the movies tonight?",
+   "reply": "Sure. I love movies.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What do you do for work?",
+   "reply": "I'm a teacher.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "Can you recommend a good restaurant?",
+   "reply": "Actually, I'm going to have a good restaurant for dinner.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "What are you doing this weekend?",
+   "reply": "I have no idea.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What are you doing this weekend?",
+   "reply": "I'm going to the cinema on Friday night.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "I am looking for a job. Any advice?",
+   "reply": "I'm not sure. Let's see what they have. Tell me where they will stay.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "I am looking for a job. Any advice?",
+   "reply": "If you're looking for one, you have to pay for the company.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "I am tired.",
+   "reply": "I think you're tired.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "Why do I feel this way?",
+   "reply": "The line is high in the city, and the ball is high in the city centre, and the guys are not as important as the city as the man.",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "My name is Blake.",
+   "reply": "How's your friends?",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What is my name?",
+   "reply": "My name is James.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "I like dogs.",
+   "reply": "Me too. Black.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What animal do I like?",
+   "reply": "Well, do you like Chinese food?",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "I like dogs.",
+   "reply": "I like dogs.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What animal do I like?",
+   "reply": "Well, the Reading is a past.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "How many r's are in strawberry?",
+   "reply": "There's nothing in particular.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is 2 plus 2?",
+   "reply": "May I see your 5 -45?",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "It's only 80 yuan and it's a very popular amount.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "Explain gravity.",
+   "reply": "I think so. It's really large. I've never been there before.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "HELLO",
+   "reply": "What's the difference between the two?",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "hi how r u",
+   "reply": "that's why we didn't like it.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "Why",
+   "reply": "well, we don't often sell at all.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "...",
+   "reply": "well, we'd better get out of the car.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I love you too.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I love you too, Rose.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I love you too.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I love you too.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I love you too.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I love you too.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I'm sorry to hear that you're too young.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I am happy to meet you, too.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story.",
+   "reply": "So what do you want to hear?",
+   "score": 2
+  },
+  {
+   "group": "story",
+   "prompt": "Any story",
+   "reply": "What is that?",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story",
+   "reply": "Ah, that's terrible.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Once upon a time",
+   "reply": "Most story starts at 8 a. m. to none of the other story",
+   "score": 0
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story about a dog.",
+   "reply": "Ah, you mean, a dog.",
+   "score": 1
+  }
+ ]
+}
