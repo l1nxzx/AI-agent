@@ -4,8 +4,8 @@ Living document. One section per trained model, a comparison table, and cross-cu
 added at the end of section 4 and to the tables in section 5. Evidence (verbatim transcripts and item-level
 scores) is stored next to this file in `transcripts/` and `scores/`.
 
-Last updated after: run `tiny_dailydialog_only` (final metrics added). Models covered: 3 full Colab runs (all tiny, 2.16M parameters).
-Pending: `small`.
+Last updated after: run `small`. Models covered: 4 full Colab runs (three tiny at 2.16M parameters, one small at
+11.4M). Run 4's chat mode is still to be confirmed (see 4.4).
 
 ## 1. Summary
 
@@ -24,8 +24,15 @@ Pending: `small`.
 * On the standard rubric, run 3 scores a mean of 0.81 out of 2 on 57 graded replies (23% sensible, 42% nonsense).
   The strongest groups are identity (1.30) and topic questions (1.20). The weakest are unknown or factual
   questions (0.36) and greetings (0.56).
-* Open questions: does a larger model (`small`, 11M) help real dialogue; does a small authored identity layer
-  fix identity and "I do not know"; how much do the numbers move with sampling settings.
+* Run 4 (`small`, 11.4M parameters) is the best so far on fluency and simple dialogue: stories improve
+  (validation loss 1.56, perplexity 4.8, against 1.84 for run 3), greetings and everyday questions get natural
+  replies (greeting mean 1.50 against 0.56), and the rubric mean is 0.95 against 0.81. It does not fix grounding:
+  numbers and facts are invented (unknown-question mean 0.14), identity is invented corporate titles, and names
+  are not remembered. The rubric lists differ between runs 3 and 4, so the overall gap is within noise.
+* The small model overfit the chat data: the best mixed validation loss (1.9583) was at step 10,500 and it was
+  worse at the end of training (1.9956 at step 15,000). The saved best checkpoint is the one used for chat.
+* Open questions: does a small authored identity layer fix identity and "I do not know"; do fewer steps or a
+  smaller chat share avoid the overfitting; how much do the numbers move with sampling settings (not yet tested).
 
 ## 2. Common setup (all runs)
 
@@ -41,6 +48,11 @@ Pending: `small`.
 | hardware | Colab Tesla T4, fp16 with loss scaling, 1.24 GB GPU memory, about 270-290k tokens/s, 57-61 ms/step |
 | wall time | 8.7 minutes (run 1), 8.8 minutes (run 3); run 2 not on file |
 
+Run 4 uses the `small` config instead: 6 layers, dim 384, 6 heads, context 256, vocab 2000, 11,389,824 parameters
+(768,000 embedding, 10,621,440 in blocks); batch 32 x 2 accumulation x 256 tokens = 16,384 tokens/step; 15,000 steps =
+245,760,000 tokens; peak lr 1e-3 and 500 warmup steps (from `configs/small.json`, assumed unchanged); chat share 35%,
+loss on bot tokens only. On the T4 it ran at about 84,000 tokens/s (194 ms/step, 1.54 GB), in 50.9 minutes.
+
 Chat format in all runs: `<|user|> text <|end|> <|bot|> text <|end|> ... <|endoftext|>`.
 
 Differences between runs:
@@ -50,6 +62,7 @@ Differences between runs:
 | 1 | `runs/tiny` | everyday-conversations (SmolTalk) only | 10% | all tokens |
 | 2 | `runs/tiny_dailydialog` | DailyDialog + everyday-conversations | 35% | bot tokens only |
 | 3 | `runs/tiny_dailydialog_only` | DailyDialog only | 35% | bot tokens only |
+| 4 | `runs/small` (name to confirm) | probably DailyDialog + everyday-conversations (to confirm) | 35% | bot tokens only |
 
 Approximate passes over the data: run 1 saw the story data about 1.5 times and the chat data about 23 times
 (from the training log). Runs 2 and 3 saw the story data about 1.1 times; the chat data about 12 times (run 2,
@@ -228,15 +241,86 @@ Verdict: the most consistent in style of the three (no mixed voices), and the on
 score. Still unable to hold a conversation. The best-looking answers are generic hedges that fit anything
 ("I'm not sure.").
 
+### 4.4 Run 4: small, chat mode to be confirmed (`runs/small`)
+
+Setup: see section 2. **The chat mode is not confirmed.** The reply "Hello! How can I help you today?" to "Hi" is the
+exact line from the LLM-written everyday-conversations data, which suggests the mixed `dailydialog` mode (it never
+appeared in the DailyDialog-only run). The run folder name on Drive tells which it was. Both the model and the
+sampling settings in the chat paste are otherwise as in the earlier runs (the notebook default is 0.5 / 20; not
+recorded).
+
+Training metrics (Colab log, end of run):
+
+| step | val stories | val chat (bot tokens) | mixed | note |
+|---|---|---|---|---|
+| 10,500 | not provided | not provided | 1.9583 (best) | checkpoint used for the chat below |
+| 15,000 (final) | 1.5598 (ppl 4.8) | 2.8048 (ppl 16.5) | 1.9956 | best stays 1.9583 |
+
+Training loss at the end is about 1.32 (mixed batches). Throughput 76-85k tokens/s, three skipped fp16 steps in
+total (the loss scaler lowering its scale), gradient norm about 0.55. The end-of-run story samples are coherent
+("Once upon a time, there was a little girl named Lily... Her mom said, \"Be careful, Lily.\""); the chat sample lines
+are "I'm fine. Look at this guy. I just saw him last week." (step 15000) and "I am fine. What have you been up to
+today?" (step 14500).
+
+**Overfitting on the chat data.** At 35% chat share for 15,000 steps the model saw the chat data about 23 times if
+the data is DailyDialog plus everyday-conversations (about 3.8M tokens), or about 26 times if it is DailyDialog only
+(3.2M tokens). The mixed validation loss was best at step 10,500 and worse by step 15,000 although the story loss
+was still improving, so the chat part must have risen: the final chat validation loss (2.8048) is even slightly
+worse than the tiny model's 2.7513 in run 3 (comparable only if the chat data matches). The training script keeps
+the best checkpoint, which is why the chat used step 10,500. The full `EVAL` curve (one line every 500 steps) would
+show exactly where the chat loss turned; it was not provided.
+
+Chat quality (56 graded replies, same rubric; transcript `transcripts/small.txt`, scores `scores/small.json`):
+
+| group | n | mean | group | n | mean |
+|---|---|---|---|---|---|
+| greeting | 8 | 1.50 | unknown / factual | 7 | 0.14 |
+| topic | 13 | 1.31 | context | 6 | 0.67 |
+| loop | 7 | 1.29 | robust | 4 | 0.50 |
+| social | 5 | 0.80 | story | 2 | 0.50 |
+| identity | 4 | 0.75 | **all** | 56 | **0.95** (25% scored 2, 30% scored 0) |
+
+Findings, with evidence:
+
+1. **Natural replies to simple social exchanges.** "Hi, how are you today?" -> "I'm just fine, thanks. How are you
+   today?"; "How are you?" -> "Fine, thank you."; "Thanks, bye" -> "Goodbye." Greeting mean 1.50 (run 3: 0.56), though
+   the same prompt can still derail ("Hello, how are you?" gave "I'm going to the hospital to see a doctor. My
+   father's in New York." in one sample and "I'm fine, thanks." in another).
+2. **Plausible answers to everyday questions.** "What do you do for work?" -> "I'm a teacher."; "What are you doing
+   this weekend?" -> "I'm preparing for a course."; "Do you like dogs?" -> "I like dogs."; "Explain gravity." ->
+   "What do you mean?" (it can ask back).
+3. **Invented numbers and facts, now stated confidently.** "How many r's are in strawberry?" -> "15 round."; "What
+   is 2 plus 2?" -> "He's 14." and "15."; "What is the capital of France?" -> "2225." and "The capital of France is
+   South Youth, Notice Ryan."; "hi how r u" -> "125,000 dollars." DailyDialog contains many prices and times, so the
+   model learned that numbers go in answers, not which ones. Unknown-question mean 0.14, the lowest group.
+4. **Identity is invented corporate titles:** "I'm the Corpor Lod.", "I'm your license.", "My name is Laura's
+   Connica.", "No, I'm the Corporate Management." This reflects the business-dialogue register of the data and
+   there is still no stable self.
+5. **The model copies itself.** "I love you" was answered "I love you, too." three times; "I hate you" got the same
+   line three times; and then "Tell me a story." also got "I love you, too." In another conversation, once the
+   bot said "I like dogs." it answered "You are stupid" and "You are cute" with "I do like dogs." The model's own
+   earlier replies dominate its next reply.
+6. **Names are not remembered:** "My name is Blake." -> "I'm Blake. I have been looking forward to seeing you."
+   (the bot takes the name), "What is my name?" -> "I'm Mega."
+7. **Stories are not a chat skill** ("Tell me a story." -> "OK, I'll listen to you.", the roles swapped, as in the
+   source dialogues where the user tells the story).
+
+Verdict: the best of the four runs on fluency, on natural short replies and on stories, and a clear step up from
+the tiny models on simple dialogue. It is not more grounded: facts, identity and memory are no better and in
+places worse (identity 0.75 against 1.30, unknown 0.14 against 0.36, with different prompt lists).
+
 ## 5. Comparison
 
 ### 5.1 Item-level scores (rubric v1; generated by `python reports/score_summary.py`)
 
-| run | n | overall | share 2 | share 0 | context | greeting | identity | social | story | topic | unknown |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| tiny_dailydialog_only | 57 | 0.81 | 23% | 42% | 0.67 (6) | 0.56 (9) | 1.30 (10) | 0.80 (5) | 1.00 (3) | 1.20 (10) | 0.36 (14) |
+| run | n | overall | share 2 | share 0 | context | greeting | identity | loop | robust | social | story | topic | unknown |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| small (chat mode unconfirmed) | 56 | 0.95 | 25% | 30% | 0.67 (6) | 1.50 (8) | 0.75 (4) | 1.29 (7) | 0.50 (4) | 0.80 (5) | 0.50 (2) | 1.31 (13) | 0.14 (7) |
+| tiny_dailydialog_only | 57 | 0.81 | 23% | 42% | 0.67 (6) | 0.56 (9) | 1.30 (10) | - | - | 0.80 (5) | 1.00 (3) | 1.20 (10) | 0.36 (14) |
 
-Runs 1 and 2 are not yet scored item by item (see section 3.3).
+Runs 1 and 2 are not yet scored item by item (see section 3.3). The prompt lists differ between runs 3 and 4
+(they are the user's own prompts), and the groups `loop` and `robust` exist only for run 4, so only the overlapping
+groups are comparable, and differences of a few tenths are within the noise of a single rater.
 
 ### 5.2 Training metrics on file
 
@@ -245,45 +329,57 @@ Runs 1 and 2 are not yet scored item by item (see section 3.3).
 | 1 `tiny` | 1.8074 | 2.1776 | 1.8444 (chat share 10%) | 8.7 min |
 | 2 `tiny_dailydialog` | not provided | not provided | 2.1284 (chat share 35%) | not provided |
 | 3 `tiny_dailydialog_only` | 1.8369 | 2.7513 (bot tokens only) | 2.1570 (chat share 35%) | 8.8 min |
+| 4 `small` | 1.5598 (final step; ppl 4.8) | 2.8048 (final step; ppl 16.5) | best 1.9583 at step 10,500; final 1.9956 | 50.9 min |
 
 Mixed losses are not comparable (different chat sets and shares).
 
 ### 5.3 Qualitative comparison
 
-| aspect | run 1 | run 2 | run 3 |
-|---|---|---|---|
-| reply length | long | mixed | short |
-| on-topic | no | rarely | sometimes (generic) |
-| consistent voice | invents topics | two voices | one voice |
-| identity | invents ("many conductures") | random | random names, relevant form |
-| invents facts/numbers | yes, heavily | some | little (replies are short) |
-| context use | not tested | weak | weak |
-| stories (text mode) | OK | OK | not shown |
+| aspect | run 1 | run 2 | run 3 | run 4 (small) |
+|---|---|---|---|---|
+| reply length | long | mixed | short | short |
+| on-topic | no | rarely | sometimes (generic) | often, for simple questions |
+| consistent voice | invents topics | two voices | one voice | mostly one voice, business register |
+| identity | invents ("many conductures") | random | random names | invented corporate titles |
+| invents facts/numbers | yes, heavily | some | little (short replies) | yes, numbers stated confidently |
+| context use | not tested | weak | weak | weak; copies its own earlier replies |
+| stories (text mode) | OK | OK | not shown | best (val loss 1.56) |
 
 ## 6. Cross-cutting findings
 
 1. **Data decides chat behavior at this size.** With the model fixed, the chat data alone changed the failure mode
    from topical invention to inconsistent voices to phone-call style. (Evidence: runs 1-3.)
 2. **Validation loss does not predict chat quality.** Run 1 had the lowest chat perplexity on file (8.8, against
-   15.7 for run 3, which are not directly comparable) and the worst replies. Reading answers is required.
-3. **Fluency is learned easily; grounding is not.** Grammar, register and local plausibility appear within a
-   few thousand steps. Facts, arithmetic, identity and memory do not appear at 2M parameters on this data.
-4. **No uncertainty without data for it.** Real dialogue data never says "I do not know I am a small model", so
-   the model never does. (Preliminary evidence in the appendix suggests this can be taught with data.)
-5. **Repetition under pressure.** Out-of-domain prompts make the model lock onto words ("wine") and loop.
-   Sampling-time repetition control has not been tried yet.
-6. **Story ability is stable across runs** and mostly comes from the TinyStories mixture, not from the chat data.
+   15.7 for run 3, which are not directly comparable) and the worst replies.
+3. **Fluency is learned easily and size helps it; grounding is not.** Going from 2M to 11M parameters improved
+   story loss (1.84 -> 1.56) and simple social replies (greeting mean 0.56 -> 1.50), but not facts (0.36 -> 0.14),
+   identity (1.30 -> 0.75) or context (0.67 -> 0.67). Prompt lists differed, so the chat differences are tentative.
+4. **No uncertainty without data for it.** Real dialogue data never says "I do not know, I am a small model", so
+   the model never does; it states invented numbers and names instead. (Preliminary evidence in the appendix
+   suggests this can be taught with data.)
+5. **Repetition and self-copying.** Out-of-domain prompts make the model lock onto words ("wine", run 3) and
+   repeat its own earlier replies ("I love you, too." for unrelated prompts, run 4). Sampling-time repetition
+   control has not been tried yet.
+6. **Story ability is stable across chat data variants** and mostly comes from the TinyStories mixture; it improves
+   with model size.
+7. **Bigger models overfit the small chat set sooner.** The small model's mixed validation loss was best at step
+   10,500 and worse at 15,000 (23-26 passes over the chat data). More steps do not help; more chat data, fewer
+   steps or a lower chat share might. Saving the best checkpoint by validation loss already protects against this.
 
 ## 7. Next experiments
 
-1. Run the standard set on the saved models of runs 1-3 (`tinylm.eval_chat`) and score them, so the comparison in
-   5.1 is complete and fair.
-2. Train `small` (11.4M parameters) on `dailydialog_only` and compare. Hypothesis: better fluency and context use,
-   unchanged identity and uncertainty failures.
-3. Try a small authored identity layer on top of real data (a few percent of the chat share, covering greetings,
+1. Confirm run 4's chat mode and paste its `EVAL` lines (one per 500 steps) to see exactly where the chat loss
+   turned.
+2. Run the standard set on the saved models of runs 1-4 (`tinylm.eval_chat`) and score them, so the comparison in
+   5.1 uses identical prompts.
+3. Repeat `small` with fewer steps (about 10,000) or a lower chat share (for example 0.25) to avoid the chat
+   overfitting, and compare with run 4.
+4. Add a repetition penalty at sampling time and re-run the standard set to measure its effect on the loops and
+   self-copying.
+5. Try a small authored identity layer on top of real data (a few percent of the chat share, covering greetings,
    identity and "I do not know"). This is a data change only; no rules in the model or code.
-4. Add a repetition penalty at sampling time and re-run the standard set to measure its effect on the loops.
-5. Record sampling settings and the final training log line for every new run, so the tables have no gaps.
+6. Hold off on `medium` (20M) until there is more chat data: it would overfit the chat set even sooner.
+7. Record sampling settings and the final training log lines for every new run, so the tables have no gaps.
 
 ## Appendix A. Preliminary experiments (assistant-run, CPU, not full runs)
 

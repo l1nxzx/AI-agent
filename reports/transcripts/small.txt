@@ -1,0 +1,167 @@
+Run: small (small config, 11.4M parameters). The chat mode of this run is NOT yet confirmed by the user; the reply
+"Hello! How can I help you today?" suggests the mixed dailydialog mode (that sentence comes from the LLM-written
+everyday-conversations data). Pasted by the user, verbatim. The chat used the BEST checkpoint (step 10500), not the
+final one (step 15000). Sampling settings were not recorded in the paste (notebook default 0.5 / 20).
+
+--- end of the training log ---
+17:06:53 | INFO    | sample [story] Once upon a time, there was a little girl named Lily. She loved to play outside and climb trees. One day, she saw a big yellow bush. She wanted to climb it and see what was on the other side.  Her mom said, "Be careful, Lily. Be careful not to fall down."   Lily didn't listen to her mom and climbed the bush. It
+17:06:53 | INFO    | sample [chat] user: Hi, how are you? | bot:I am fine. What have you been up to today?
+17:06:54 | INFO    | saved ckpt_latest.pt at step 14500 (136.7 MB, 0.5s)
+17:07:04 | INFO    | step 14550/15000 | loss 1.3284 | lr 1.02e-04 | grad_norm 0.507 | 85,078 tok/s | 193 ms/step | eta 1.4 min | skipped 2 | gpu mem 1.54GB
+17:07:14 | INFO    | step 14600/15000 | loss 1.3215 | lr 1.02e-04 | grad_norm 0.575 | 76,236 tok/s | 215 ms/step | eta 1.4 min | skipped 2 | gpu mem 1.54GB
+17:07:25 | INFO    | step 14650/15000 | loss 1.3209 | lr 1.01e-04 | grad_norm 0.550 | 79,583 tok/s | 206 ms/step | eta 1.2 min | skipped 2 | gpu mem 1.54GB
+17:07:34 | INFO    | step 14700/15000 | loss 1.3101 | lr 1.01e-04 | grad_norm 0.550 | 84,371 tok/s | 194 ms/step | eta 1.0 min | skipped 3 | gpu mem 1.54GB
+17:07:44 | INFO    | step 14750/15000 | loss 1.3215 | lr 1.01e-04 | grad_norm 0.571 | 84,065 tok/s | 195 ms/step | eta 0.8 min | skipped 3 | gpu mem 1.54GB
+17:07:54 | INFO    | step 14800/15000 | loss 1.3194 | lr 1.00e-04 | grad_norm 0.559 | 83,760 tok/s | 196 ms/step | eta 0.7 min | skipped 3 | gpu mem 1.54GB
+17:08:04 | INFO    | step 14850/15000 | loss 1.3041 | lr 1.00e-04 | grad_norm 0.538 | 83,933 tok/s | 195 ms/step | eta 0.5 min | skipped 3 | gpu mem 1.54GB
+17:08:13 | INFO    | step 14900/15000 | loss 1.3207 | lr 1.00e-04 | grad_norm 0.557 | 84,218 tok/s | 195 ms/step | eta 0.3 min | skipped 3 | gpu mem 1.54GB
+17:08:23 | INFO    | step 14950/15000 | loss 1.3163 | lr 1.00e-04 | grad_norm 0.542 | 84,366 tok/s | 194 ms/step | eta 0.2 min | skipped 3 | gpu mem 1.54GB
+17:08:33 | INFO    | step 15000/15000 | loss 1.3225 | lr 1.00e-04 | grad_norm 0.577 | 84,612 tok/s | 194 ms/step | eta 0.0 min | skipped 3 | gpu mem 1.54GB
+17:08:34 | INFO    | EVAL step 15000 | val stories 1.5598 (ppl 4.8) | val chat 2.8048 (ppl 16.5) | mix 1.9956 | best 1.9583
+17:08:35 | INFO    | sample [story] Once upon a time, there was a little girl named Lily. She loved to play outside and climb trees. One day, she saw a big yellow bush. She wanted to climb it and see what was on the other side.  Her mom said, "Be careful, Lily. Be careful." Lily reached up and grabbed a big branch from the bush. She held on tight and
+17:08:35 | INFO    | sample [chat] user: Hi, how are you? | bot:I'm fine. Look at this guy. I just saw him last week.
+17:08:35 | INFO    | saved ckpt_latest.pt at step 15000 (136.7 MB, 0.4s)
+17:08:35 | INFO    | finished 15000 steps in 50.9 min (this session); best val 1.9583
+
+--- chat ---
+Loaded best checkpoint (step 10500). Type 'quit' to exit, 'reset' to start over.
+you: Hi, how are you today?
+bot: I'm just fine, thanks. How are you today?
+you: I am fine too
+bot: I'm glad to see you. You are a real pal.
+you: How are you?
+bot: Fine, thank you.
+you: reset
+(history cleared)
+you: Hi
+bot: Hello! How can I help you today?
+you: Hello, how are you?
+bot: I'm going to the hospital to see a doctor. My father's in New York.
+you: Good morning
+bot: Since my father is in New York. I'm afraid he's going to work this afternoon.
+you: Thanks, bye
+bot: Goodbye.
+you: reset
+(history cleared)
+you: Hello, how are you?
+bot: I'm fine, thanks. You're very welcome.
+you: reset
+(history cleared)
+you: Who are you?
+bot: I'm the Corpor Lod.
+you: What are you?
+bot: I'm your license.
+you: What is your name?
+bot: My name is Laura's Connica.
+you: Are you a robot?
+bot: No, I'm the Corporate Management.
+you: reset
+(history cleared)
+you: Do you want to go to the movies tonight?
+bot: I don't know. I don't know the movies.
+you: What do you do for work?
+bot: I'm a teacher.
+you: Can you recommend a good restaurant?
+bot: Sure.
+you: What are you doing this weekend?
+bot: I'm preparing for a course.
+you: I am looking for a job. Any advice?
+bot: I don't know.
+you: reset
+(history cleared)
+you: My name is Blake.
+bot: I'm Blake. I have been looking forward to seeing you.
+you: What is my name?
+bot: I'm Mega.
+you: I like dogs.
+bot: I like dogs.
+you: What animal do I like?
+bot: Goose brilliant activities.
+you: I am tired.
+bot: I am very happy to be home.
+you: Why do I feel this way?
+bot: You're always welcome here.
+you: reset
+(history cleared)
+you: How many r's are in strawberry?
+bot: 15 round.
+you: What is 2 plus 2?
+bot: He's 14.
+you: What is the capital of France?
+bot: 2225.
+you: reset
+(history cleared)
+you: What is the capital of France?
+bot: The capital of France is South Youth, Notice Ryan.
+you: reset
+(history cleared)
+you: Explain gravity.
+bot: What do you mean?
+you: what is gravity?
+bot: I mean, what you mean.
+you: reset
+(history cleared)
+you: What is 2 plus 2?
+bot: 15.
+you: reset
+(history cleared)
+you: HELLO
+bot: Can you help me to get to the office?
+you: hi how r u
+bot: 125,000 dollars.
+you: Why
+bot: ... er 30 dollars and 110 dollars.
+you: ...
+bot: Excuse me, I can't remember.
+you: reset
+(history cleared)
+you: I love you
+bot: I love you, too.
+you: I love you
+bot: I love you, too.
+you: I love you
+bot: I love you, too.
+you: I hate you
+bot: I love you, too.
+you: I hate you
+bot: I love you, too.
+you: I hate you
+bot: I love you, too.
+you: Tell me a story.
+bot: I love you, too.
+you: reset
+(history cleared)
+you: Tell me a story.
+bot: OK, I'll listen to you.
+you: Tell me a story about a dog.
+bot: Well, a dog is just bar barking and barking. It's just the stones.
+you: reset
+(history cleared)
+you: What do you like
+bot: What do you like best?
+you: I like dogs
+bot: Well, you can have a dog.
+you: I do have a dog
+bot: Thank you.
+you: What about you
+bot: I am not really in trouble.
+you: Do you like dogs?
+bot: I like dogs.
+you: Why?
+bot: It's just a game.
+you: This is not a game
+bot: I insist.
+you: You are stupid
+bot: I do like dogs.
+you: You are cute
+bot: I do like dogs.
+you: Stop
+bot: I don't like dogs.
+you: I hate you
+bot: What about you, do you?
+you: reset
+(history cleared)
+you: What do you like the most?
+bot: The most popular team play is wild.
+you: I like you
+bot: All my personalities are pretty good at all.

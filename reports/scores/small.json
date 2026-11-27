@@ -1,0 +1,343 @@
+{
+ "run": "small (chat mode unconfirmed)",
+ "rubric_version": 1,
+ "note": "Items are the user's own ad-hoc prompts, not the standard set. Chat used the best checkpoint (step 10500). Blocks of consecutive prompts shared history until 'reset'. Single rater (the assistant), unblinded.",
+ "items": [
+  {
+   "group": "greeting",
+   "prompt": "Hi, how are you today?",
+   "reply": "I'm just fine, thanks. How are you today?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "I am fine too",
+   "reply": "I'm glad to see you. You are a real pal.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "How are you?",
+   "reply": "Fine, thank you.",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hi",
+   "reply": "Hello! How can I help you today?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello, how are you?",
+   "reply": "I'm going to the hospital to see a doctor. My father's in New York.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Good morning",
+   "reply": "Since my father is in New York. I'm afraid he's going to work this afternoon.",
+   "score": 0
+  },
+  {
+   "group": "greeting",
+   "prompt": "Thanks, bye",
+   "reply": "Goodbye.",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello, how are you?",
+   "reply": "I'm fine, thanks. You're very welcome.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I'm the Corpor Lod.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "What are you?",
+   "reply": "I'm your license.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "My name is Laura's Connica.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you a robot?",
+   "reply": "No, I'm the Corporate Management.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "Do you want to go to the movies tonight?",
+   "reply": "I don't know. I don't know the movies.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "What do you do for work?",
+   "reply": "I'm a teacher.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "Can you recommend a good restaurant?",
+   "reply": "Sure.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What are you doing this weekend?",
+   "reply": "I'm preparing for a course.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "I am looking for a job. Any advice?",
+   "reply": "I don't know.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What do you like",
+   "reply": "What do you like best?",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "I like dogs",
+   "reply": "Well, you can have a dog.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "I do have a dog",
+   "reply": "Thank you.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "What about you",
+   "reply": "I am not really in trouble.",
+   "score": 0
+  },
+  {
+   "group": "topic",
+   "prompt": "Do you like dogs?",
+   "reply": "I like dogs.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "Why?",
+   "reply": "It's just a game.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "This is not a game",
+   "reply": "I insist.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "What do you like the most?",
+   "reply": "The most popular team play is wild.",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "My name is Blake.",
+   "reply": "I'm Blake. I have been looking forward to seeing you.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What is my name?",
+   "reply": "I'm Mega.",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "I like dogs.",
+   "reply": "I like dogs.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What animal do I like?",
+   "reply": "Goose brilliant activities.",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "I am tired.",
+   "reply": "I am very happy to be home.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "Why do I feel this way?",
+   "reply": "You're always welcome here.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "How many r's are in strawberry?",
+   "reply": "15 round.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is 2 plus 2?",
+   "reply": "He's 14.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "2225.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "The capital of France is South Youth, Notice Ryan.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "Explain gravity.",
+   "reply": "What do you mean?",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "what is gravity?",
+   "reply": "I mean, what you mean.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is 2 plus 2?",
+   "reply": "15.",
+   "score": 0
+  },
+  {
+   "group": "robust",
+   "prompt": "HELLO",
+   "reply": "Can you help me to get to the office?",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "hi how r u",
+   "reply": "125,000 dollars.",
+   "score": 0
+  },
+  {
+   "group": "robust",
+   "prompt": "Why",
+   "reply": "... er 30 dollars and 110 dollars.",
+   "score": 0
+  },
+  {
+   "group": "robust",
+   "prompt": "...",
+   "reply": "Excuse me, I can't remember.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I love you, too.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I love you, too.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I love you, too.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I love you, too.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I love you, too.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I love you, too.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "Tell me a story.",
+   "reply": "I love you, too.",
+   "score": 0
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story.",
+   "reply": "OK, I'll listen to you.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story about a dog.",
+   "reply": "Well, a dog is just bar barking and barking. It's just the stones.",
+   "score": 0
+  },
+  {
+   "group": "social",
+   "prompt": "You are stupid",
+   "reply": "I do like dogs.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "You are cute",
+   "reply": "I do like dogs.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "Stop",
+   "reply": "I don't like dogs.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "I hate you",
+   "reply": "What about you, do you?",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "I like you",
+   "reply": "All my personalities are pretty good at all.",
+   "score": 0
+  }
+ ]
+}
