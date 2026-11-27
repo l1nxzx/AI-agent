@@ -492,6 +492,26 @@ reflects that the data is narrow and repetitive, so it is optimistic. This varia
 downloaded dataset (and its first version had a data bug: in some intents the reply was chosen at random from a list, so a reply could be paired with the wrong question; fixed since, with question-specific replies stored as pairs, and the whole bank rewritten for the Petryk identity), and the project owner objected that it is not "real" (the model itself has no hard-coded
 answers, but the behavior is learned from authored text). It has not been run on Colab.
 
+### A.2 Identity layer (Petryk) on DailyDialog: CPU sanity run
+
+Added after run 5 and not a Colab run. It checks that the `dailydialog_identity` data (DailyDialog plus authored
+identity conversations in the voice of Petryk, a calm, plain-spoken small language model) is learned and not broken.
+Same CPU setup as above (1,800 steps, batch 16, chat share 50%), but with the identity layer enlarged to 6,000
+conversations, 11.7% of the chat tokens, so that a short run could show an effect (the real default is 1,500
+conversations, about 3.4%). Validation stays DailyDialog-only: val stories 2.4966, val chat 3.1933, mixed 2.8450.
+
+What it learned within 6.6 minutes (no repetition penalty): the greeting ("Hello. I am Petryk. What would you like to
+talk about?"), what it can do (the honest "I cannot look things up, and my knowledge is limited" answer), its
+creator ("A person built me and trained me from scratch..."), and honest refusal to guess for questions it cannot
+answer ("What is the capital of France?" and the strawberry question both got "I cannot answer that reliably, and
+I do not want to invent an answer."). What went wrong: "Who are you?" and "What is your name?" were answered
+with the name-memory template ("You told me your name is Zoe."), because the name-memory questions included "Who am
+I?"; name copying was not learned yet (a name given in the conversation was not reproduced); "Can you see me?" got
+an answer from another question; and an everyday question ("Do you want to go to the movies tonight?") was
+answered with a story, a sign the layer was too large at 11.7%. The data was fixed for the first problem (the
+confusable question was removed); the others are expected to improve with the longer Colab run and the smaller
+real share, and need checking there.
+
 ## Appendix B. Adding a model to this report
 
 1. Train, then record: run folder, config, chat mode, final EVAL line (stories, chat, mixed) and wall time from

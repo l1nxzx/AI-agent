@@ -247,7 +247,10 @@ def make_name(rng):
 NAME_INTRO_USER = ["My name is {n}.", "I am {n}.", "Hi, I am {n}", "Call me {n}", "I'm {n}.", "You can call me {n}"]
 NAME_INTRO_BOT = ["Nice to meet you, {n}. I am Petryk. What can I do for you?", "Hello, {n}. It is nice to meet you.",
                   "Pleased to meet you, {n}."]
-NAME_ASK_USER = ["What is my name?", "Do you remember my name?", "Who am I?", "Can you say my name?", "Do you know my name?"]
+# Questions about the USER'S name always say "my". A near-identical question such as "Who am I?" next to
+# "Who are you?" confused a short CPU test (the bot answered "Who are you?" with the user's name), so it is left out.
+NAME_ASK_USER = ["What is my name?", "Do you remember my name?", "What did I tell you my name was?", "Can you say my name?",
+                 "Do you know my name?", "Tell me my name"]
 NAME_ASK_BOT = ["Your name is {n}.", "You told me your name is {n}.", "You are {n}. You told me a moment ago."]
 
 GREETING_WORDS = re.compile(r"^(hi|hello|hey|good morning|good evening|howdy|yo)\b", re.I)
