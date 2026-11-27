@@ -151,7 +151,7 @@ def main(argv=None):
 
     # ---- data and tokenizer -----------------------------------------------------------------
     tok = BPETokenizer.load(os.path.join(args.data_dir, "tokenizer.json"))
-    data = DataSource(args.data_dir, mc.context_len, tc.chat_fraction, tc.seed)
+    data = DataSource(args.data_dir, mc.context_len, tc.chat_fraction, tc.seed, tc.chat_loss)
     if tok.vocab_size != mc.vocab_size:
         raise ValueError(f"config vocab_size={mc.vocab_size} but the tokenizer in {args.data_dir} has "
                          f"{tok.vocab_size}. Re-run prepare_data with --vocab_size {mc.vocab_size}, or fix the config.")
@@ -191,7 +191,8 @@ def main(argv=None):
             raise ValueError(f"{ckpt_path} was trained with a different model config:\n  checkpoint: {ckpt['config']['model']}\n"
                              f"  current:    {cfg.to_dict()['model']}\nUse a new --out_dir or restore the original config.")
         if ckpt.get("tokenizer_fingerprint") != tok.fingerprint():
-            raise ValueError("checkpoint was trained with a different tokenizer")
+            raise ValueError("checkpoint was trained with a different tokenizer (for example the data was rebuilt "
+                             "with another chat_mode). Use a new --out_dir, or delete the old checkpoints.")
         model.load_state_dict(ckpt["model"])
         optimizer.load_state_dict(ckpt["optimizer"])
         if scaler.is_enabled() and ckpt.get("scaler"):
@@ -220,9 +221,15 @@ def main(argv=None):
 
     # ---- first-batch sanity checks ----------------------------------------------------------
     x, y, n_chat = data.train_batch(step, 0, tc.batch_size)
-    assert (x[:, 1:] == y[:, :-1]).all(), "targets are not inputs shifted by one"
-    log.info(f"sanity: first batch shape {tuple(x.shape)}, {n_chat} chat rows; decoded start of row 0: "
-             + repr(tok.decode(x[0, :40].tolist())))
+    active = y != -100
+    assert ((x[:, 1:] == y[:, :-1]) | ~active[:, :-1]).all(), "targets are not inputs shifted by one"
+    log.info(f"sanity: first batch shape {tuple(x.shape)}, {n_chat} chat rows; loss active on {active.float().mean() * 100:.0f}% "
+             f"of target tokens (chat_loss={tc.chat_loss}); decoded start of row 0: " + repr(tok.decode(x[0, :40].tolist())))
+    if n_chat > 0:
+        row = x.shape[0] - 1   # chat rows come last in the batch
+        shown = " ".join(("[" + tok.vocab[t].decode("utf-8", "replace") + "]") if a else tok.vocab[t].decode("utf-8", "replace")
+                         for t, a in zip(x[row, 1:61].tolist(), active[row, :60].tolist()))
+        log.info("sanity: a chat row, tokens in [brackets] are the ones the loss covers: " + shown.replace("\n", " "))
     if step == 0:
         ev = evaluate(model, data, tc, device, autocast_ctx)
         expected = math.log(mc.vocab_size)

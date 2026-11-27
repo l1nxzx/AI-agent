@@ -144,8 +144,27 @@ def encode_conversation(tok, conv):
     return ids
 
 
-def _write_bin(path, docs_ids):
-    arr = np.fromiter((i for doc in docs_ids for i in doc), dtype=np.uint16)
+def encode_conversation_with_mask(tok, conv):
+    """Same ids as encode_conversation, plus a 0/1 mask marking the tokens the bot must LEARN to
+    produce: the words of each bot reply and the <|end|> that closes it. Role markers, user text and
+    <|endoftext|> are 0: the user's words are given, so there is nothing to learn by predicting them."""
+    ids, mask = [], []
+    for role, content in conv:
+        body = tok.encode(content)
+        learn = 1 if role == "assistant" else 0
+        ids.append(tok.token_id(ROLE_TO_MARKER[role]))
+        mask.append(0)
+        ids.extend(body)
+        mask.extend([learn] * len(body))
+        ids.append(tok.token_id(END))
+        mask.append(learn)
+    ids.append(tok.token_id(ENDOFTEXT))
+    mask.append(0)
+    return ids, mask
+
+
+def _write_bin(path, docs_ids, dtype=np.uint16):
+    arr = np.fromiter((i for doc in docs_ids for i in doc), dtype=dtype)
     arr.tofile(path)
     return arr
 
@@ -160,14 +179,14 @@ def _stats(name, docs_ids, n_chars):
     return {"docs": len(docs_ids), "tokens": total}
 
 
-def write_dataset(data_dir, tok, story_train, story_val, chat_train, chat_val, sources=None):
+def write_dataset(data_dir, tok, story_train, story_val, chat_train, chat_val, sources=None, chat_mode="real"):
     """Encode all four splits, verify the encoding round-trips, write .bin files and meta.json.
     Inputs are lists of strings (stories) and lists of conversations."""
     log = get_logger()
     os.makedirs(data_dir, exist_ok=True)
     if tok.vocab_size > 65535:
         raise ValueError("vocab too large for uint16 storage")
-    meta = {"tokenizer_fingerprint": tok.fingerprint(), "vocab_size": tok.vocab_size,
+    meta = {"tokenizer_fingerprint": tok.fingerprint(), "vocab_size": tok.vocab_size, "chat_mode": chat_mode,
             "created": time.strftime("%Y-%m-%d %H:%M:%S"), "sources": sources or {}, "splits": {}}
     splits = {
         "stories_train": ([encode_story(tok, t) for t in story_train], sum(len(t) for t in story_train)),
@@ -182,6 +201,13 @@ def write_dataset(data_dir, tok, story_train, story_val, chat_train, chat_val, s
         arr = _write_bin(os.path.join(data_dir, name + ".bin"), docs)
         assert len(arr) == meta["splits"][name]["tokens"]
         assert arr.max() < tok.vocab_size
+        if name.startswith("chat"):
+            pairs = [encode_conversation_with_mask(tok, c) for c in (chat_train if name == "chat_train" else chat_val)]
+            assert [p[0] for p in pairs] == docs, "mask encoder disagrees with the plain encoder"
+            marr = _write_bin(os.path.join(data_dir, name + ".mask"), [p[1] for p in pairs], dtype=np.uint8)
+            assert len(marr) == len(arr)
+            meta["splits"][name]["bot_token_fraction"] = float(marr.mean())
+            get_logger().info(f"{name}: loss-active (bot) tokens = {marr.mean() * 100:.1f}% of all chat tokens")
 
     # Sanity check: decoding must give back the original text exactly (byte-level BPE is lossless).
     for text in (story_train[:200] + story_val[:50]):
@@ -200,7 +226,7 @@ def write_dataset(data_dir, tok, story_train, story_val, chat_train, chat_val, s
     tok.save(os.path.join(data_dir, "tokenizer.json"))
     with open(os.path.join(data_dir, "meta.json"), "w") as f:
         json.dump(meta, f, indent=2)
-    log.info(f"wrote {len(BIN_FILES)} token files, tokenizer.json and meta.json to {data_dir}")
+    log.info(f"wrote {len(BIN_FILES)} token files (+ 2 chat masks), tokenizer.json and meta.json to {data_dir}")
     return meta
 
 
@@ -216,7 +242,7 @@ class DataSource:
     (seed, step, micro_step), so a resumed run sees exactly the data it would have seen.
     """
 
-    def __init__(self, data_dir, context_len, chat_fraction, seed):
+    def __init__(self, data_dir, context_len, chat_fraction, seed, chat_loss="bot_only"):
         self.context_len = context_len
         self.chat_fraction = chat_fraction
         self.seed = seed
@@ -229,13 +255,28 @@ class DataSource:
             if len(arr) < context_len + 2:
                 raise ValueError(f"{name} has only {len(arr)} tokens, fewer than context_len+2")
             self.arrays[name[:-4]] = arr
+        # Optional per-token loss masks for chat (1 = bot token the model should learn). With
+        # chat_loss="all" they are ignored and every chat token counts.
+        self.masks = {}
+        if chat_loss == "bot_only":
+            for name in ("chat_train", "chat_val"):
+                mpath = os.path.join(data_dir, name + ".mask")
+                if os.path.exists(mpath):
+                    self.masks[name] = np.memmap(mpath, dtype=np.uint8, mode="r")
+                    assert len(self.masks[name]) == len(self.arrays[name])
         with open(os.path.join(data_dir, "meta.json")) as f:
             self.meta = json.load(f)
 
-    def _windows(self, arr, rng, n):
-        starts = rng.integers(0, len(arr) - self.context_len - 1, size=n)
-        x = np.stack([arr[s:s + self.context_len] for s in starts]).astype(np.int64)
-        y = np.stack([arr[s + 1:s + 1 + self.context_len] for s in starts]).astype(np.int64)
+    def _windows(self, name, rng, n):
+        arr = self.arrays[name]
+        mask = self.masks.get(name)
+        T = self.context_len
+        starts = rng.integers(0, len(arr) - T - 1, size=n)
+        x = np.stack([arr[s:s + T] for s in starts]).astype(np.int64)
+        y = np.stack([arr[s + 1:s + 1 + T] for s in starts]).astype(np.int64)
+        if mask is not None:
+            keep = np.stack([mask[s + 1:s + 1 + T] for s in starts]) == 1
+            y = np.where(keep, y, -100)   # -100 is ignored by the cross-entropy loss
         return x, y
 
     def train_batch(self, step, micro, batch_size):
@@ -245,9 +286,9 @@ class DataSource:
         n_chat = int(rng.binomial(batch_size, self.chat_fraction))
         parts = []
         if batch_size - n_chat > 0:
-            parts.append(self._windows(self.arrays["stories_train"], rng, batch_size - n_chat))
+            parts.append(self._windows("stories_train", rng, batch_size - n_chat))
         if n_chat > 0:
-            parts.append(self._windows(self.arrays["chat_train"], rng, n_chat))
+            parts.append(self._windows("chat_train", rng, n_chat))
         x = np.concatenate([p[0] for p in parts])
         y = np.concatenate([p[1] for p in parts])
         return torch.from_numpy(x), torch.from_numpy(y), n_chat
@@ -257,5 +298,5 @@ class DataSource:
         import torch
 
         rng = np.random.default_rng([987654321, i])
-        x, y = self._windows(self.arrays[source + "_val"], rng, batch_size)
+        x, y = self._windows(source + "_val", rng, batch_size)
         return torch.from_numpy(x), torch.from_numpy(y)

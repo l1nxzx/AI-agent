@@ -38,8 +38,8 @@ def test_batches_are_shifted_and_deterministic(data_dir):
     ds = DataSource(data_dir, context_len=16, chat_fraction=0.5, seed=1)
     x, y, n_chat = ds.train_batch(step=3, micro=0, batch_size=8)
     assert x.shape == y.shape == (8, 16)
-    # targets are the inputs shifted left by one token
-    assert (x[:, 1:] == y[:, :-1]).all()
+    # targets are the inputs shifted left by one token (positions the loss ignores are -100)
+    assert ((x[:, 1:] == y[:, :-1]) | (y[:, :-1] == -100)).all()
     x2, y2, n2 = ds.train_batch(step=3, micro=0, batch_size=8)
     assert (x == x2).all() and n_chat == n2
     x3, _, _ = ds.train_batch(step=4, micro=0, batch_size=8)
@@ -57,3 +57,25 @@ def test_ids_in_range(data_dir, tok):
     ds = DataSource(data_dir, context_len=16, chat_fraction=0.5, seed=1)
     for name, arr in ds.arrays.items():
         assert int(np.max(arr)) < tok.vocab_size
+
+
+def test_bot_only_mask_covers_exactly_bot_tokens(tok):
+    from tinylm.data import encode_conversation_with_mask
+    ids, mask = encode_conversation_with_mask(tok, CONVS[0])
+    assert ids == encode_conversation(tok, CONVS[0])
+    learned = [i for i, m in zip(ids, mask) if m]
+    text = tok.decode(learned)
+    assert text == "Hello! How can I help you today?" + END + "Sure, here is some information." + END
+    assert not mask[0] and not mask[-1]   # <|user|> marker and <|endoftext|> are never learned
+
+
+def test_loss_masking_in_batches(data_dir):
+    only_chat = DataSource(data_dir, context_len=16, chat_fraction=1.0, seed=1, chat_loss="bot_only")
+    _, y, _ = only_chat.train_batch(0, 0, 8)
+    assert (y == -100).any() and (y != -100).any()
+    full = DataSource(data_dir, context_len=16, chat_fraction=1.0, seed=1, chat_loss="all")
+    _, y2, _ = full.train_batch(0, 0, 8)
+    assert not (y2 == -100).any()
+    stories = DataSource(data_dir, context_len=16, chat_fraction=0.0, seed=1)
+    _, y3, _ = stories.train_batch(0, 0, 8)
+    assert not (y3 == -100).any()   # stories are always fully learned

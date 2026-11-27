@@ -50,6 +50,7 @@ class TrainConfig:
     log_interval: int = 50          # steps between training log lines
     ckpt_interval: int = 500        # steps between checkpoints
     chat_fraction: float = 0.15     # share of each batch drawn from chat data
+    chat_loss: str = "bot_only"     # bot_only: learn only bot replies in chat; all: learn every chat token
     dtype: str = "auto"             # auto | fp32 | fp16 | bf16 (auto: fp16 on CUDA, fp32 on CPU)
     sample_tokens: int = 80         # tokens generated for the sample shown at each eval
 
@@ -58,6 +59,8 @@ class TrainConfig:
             raise ValueError("chat_fraction must be in [0, 1]")
         if self.warmup_steps >= self.max_steps:
             raise ValueError("warmup_steps must be smaller than max_steps")
+        if self.chat_loss not in ("bot_only", "all"):
+            raise ValueError("chat_loss must be bot_only or all")
         if self.dtype not in ("auto", "fp32", "fp16", "bf16"):
             raise ValueError("dtype must be auto, fp32, fp16 or bf16")
 
