@@ -1,7 +1,7 @@
-Run: small (small config, 11.4M parameters). The chat mode of this run is NOT yet confirmed by the user; the reply
-"Hello! How can I help you today?" suggests the mixed dailydialog mode (that sentence comes from the LLM-written
-everyday-conversations data). Pasted by the user, verbatim. The chat used the BEST checkpoint (step 10500), not the
-final one (step 15000). Sampling settings were not recorded in the paste (notebook default 0.5 / 20).
+Run: small_dailydialog (small config, 11.4M parameters, chat mode dailydialog = DailyDialog + everyday-conversations,
+the same data as run tiny_dailydialog). Settings confirmed by the user: CONFIG "small", CHAT_MODE "dailydialog" (started by
+accident; the planned run was dailydialog_only). Pasted by the user, verbatim. The chat used the BEST checkpoint
+(step 10500), not the final one (step 15000). Sampling settings were not recorded in the paste (notebook default 0.5 / 20).
 
 --- end of the training log ---
 17:06:53 | INFO    | sample [story] Once upon a time, there was a little girl named Lily. She loved to play outside and climb trees. One day, she saw a big yellow bush. She wanted to climb it and see what was on the other side.  Her mom said, "Be careful, Lily. Be careful not to fall down."   Lily didn't listen to her mom and climbed the bush. It

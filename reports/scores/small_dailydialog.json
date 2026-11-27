@@ -1,5 +1,5 @@
 {
- "run": "small (chat mode unconfirmed)",
+ "run": "small_dailydialog",
  "rubric_version": 1,
  "note": "Items are the user's own ad-hoc prompts, not the standard set. Chat used the best checkpoint (step 10500). Blocks of consecutive prompts shared history until 'reset'. Single rater (the assistant), unblinded.",
  "items": [
