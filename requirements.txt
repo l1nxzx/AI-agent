@@ -1,0 +1,6 @@
+# torch is preinstalled on Colab; install it yourself locally (CPU build is fine for the smoke test).
+torch>=2.1
+numpy
+pyarrow
+huggingface_hub
+pytest
