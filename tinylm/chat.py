@@ -31,6 +31,17 @@ def trim_history(history, tok, max_tokens):
     return history
 
 
+def chat_turn(model, tok, history, text, max_new_tokens=120, temperature=0.5, top_k=20, generator=None):
+    """Add one user message to `history` (a list of token ids, modified in place), generate the bot reply,
+    add it to the history too, and return the reply text. Shared by the interactive loop and eval_chat."""
+    stop = stop_ids_for(tok)
+    history += [tok.token_id(USER)] + tok.encode(text) + [tok.token_id(END), tok.token_id(BOT)]
+    trim_history(history, tok, model.cfg.context_len - max_new_tokens)   # leave room for the reply
+    reply = generate(model, history, max_new_tokens, temperature, top_k, stop, generator)
+    history += reply + [tok.token_id(END)]
+    return tok.decode(reply).strip()
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--ckpt_dir", required=True)
@@ -47,7 +58,6 @@ def main(argv=None):
     model, ckpt = load_model(os.path.join(args.ckpt_dir, f"ckpt_{args.which}.pt"), args.device)
     print(f"Loaded {args.which} checkpoint (step {ckpt['step']}). Type 'quit' to exit, 'reset' to start over.")
     gen = torch.Generator().manual_seed(args.seed)
-    stop = stop_ids_for(tok)
     history = []
     blank = 0
     while True:
@@ -67,12 +77,7 @@ def main(argv=None):
             history = []
             print("(history cleared)")
             continue
-        history += [tok.token_id(USER)] + tok.encode(text) + [tok.token_id(END), tok.token_id(BOT)]
-        # leave room for the reply inside the context window
-        trim_history(history, tok, model.cfg.context_len - args.max_new_tokens)
-        reply = generate(model, history, args.max_new_tokens, args.temperature, args.top_k, stop, gen)
-        history += reply + [tok.token_id(END)]
-        print("bot:", tok.decode(reply).strip())
+        print("bot:", chat_turn(model, tok, history, text, args.max_new_tokens, args.temperature, args.top_k, gen))
 
 
 if __name__ == "__main__":

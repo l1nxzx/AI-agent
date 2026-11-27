@@ -87,3 +87,17 @@ def test_chat_loop_and_history_trim(setup, monkeypatch, capsys):
     u, e, b = tok.token_id("<|user|>"), tok.token_id("<|end|>"), tok.token_id("<|bot|>")
     hist = [u, 1, 2, e, b, 3, e, u, 4, e, b, 5, e]
     assert trim_history(list(hist), tok, 8)[0] == u and len(trim_history(list(hist), tok, 8)) <= 8
+
+
+def test_eval_chat_runs_standard_set(setup, capsys):
+    from tinylm.eval_chat import STANDARD_SET, main as eval_main
+    root, data, cfg = setup
+    out = str(root / "out")
+    if not os.path.exists(os.path.join(out, "ckpt_best.pt")):
+        train_main(["--config", cfg, "--data_dir", data, "--out_dir", out])
+    eval_main(["--ckpt_dir", out, "--max_new_tokens", "4", "--device", "cpu"])
+    printed = capsys.readouterr().out
+    assert printed.count("you:") >= len(STANDARD_SET)
+    result = json.load(open(os.path.join(out, "eval_chat_best.json")))
+    assert len(result["records"]) == sum(r for _, _, r in STANDARD_SET)
+    assert "=== identity ===" in open(os.path.join(out, "eval_chat_best.txt")).read()
