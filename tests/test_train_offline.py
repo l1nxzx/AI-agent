@@ -70,3 +70,20 @@ def test_lr_schedule():
     assert lr_at(60, tc) == pytest.approx(0.55)        # halfway: midpoint of 1.0 and 0.1
     assert lr_at(110, tc) == pytest.approx(0.1)        # ends at min_lr
     assert lr_at(10_000, tc) == pytest.approx(0.1)     # stays at min_lr
+
+
+def test_chat_loop_and_history_trim(setup, monkeypatch, capsys):
+    from tinylm.chat import main as chat_main, trim_history
+    root, data, cfg = setup
+    out = str(root / "out")
+    if not os.path.exists(os.path.join(out, "ckpt_best.pt")):
+        train_main(["--config", cfg, "--data_dir", data, "--out_dir", out])
+    inputs = iter(["Hello there", "How are you", "reset", "quit"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+    chat_main(["--ckpt_dir", out, "--max_new_tokens", "6", "--device", "cpu"])
+    printed = capsys.readouterr().out
+    assert printed.count("bot:") == 2 and "history cleared" in printed
+    tok = BPETokenizer.load(os.path.join(out, "tokenizer.json"))
+    u, e, b = tok.token_id("<|user|>"), tok.token_id("<|end|>"), tok.token_id("<|bot|>")
+    hist = [u, 1, 2, e, b, 3, e, u, 4, e, b, 5, e]
+    assert trim_history(list(hist), tok, 8)[0] == u and len(trim_history(list(hist), tok, 8)) <= 8

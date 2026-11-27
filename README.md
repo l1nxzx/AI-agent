@@ -20,6 +20,7 @@ tinylm/
   model.py          the transformer (RMSNorm, RoPE, attention, SwiGLU, weight tying)
   train.py          training loop, LR schedule, validation, checkpoints, resume (CLI)
   sample.py         temperature / top-k generation (CLI)
+  chat.py           interactive multi-turn chat (CLI)
   smoke.py          end-to-end CPU smoke test (CLI)
   logutil.py        console + file logging and JSON-lines metrics
 tests/              pytest: tokenizer, data, model, training/resume (all offline)
@@ -44,6 +45,7 @@ python -m tinylm.prepare_data --data_dir data --vocab_size 2000
 python -m tinylm.train --config configs/tiny.json --data_dir data --out_dir runs/tiny
 python -m tinylm.sample --ckpt_dir runs/tiny --prompt "Once upon a time"
 python -m tinylm.sample --ckpt_dir runs/tiny --chat --prompt "Hi, how are you?"
+python -m tinylm.chat --ckpt_dir runs/tiny      # interactive multi-turn chat
 ```
 
 Any setting can be overridden on the command line without editing files, for example

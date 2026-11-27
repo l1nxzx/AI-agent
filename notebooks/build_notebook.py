@@ -103,6 +103,12 @@ code("""
 !python -m tinylm.sample --ckpt_dir {RUN_DIR} --chat --prompt "Hi, how are you today?" --num_samples 2 --temperature 0.7 --top_k 40
 """)
 
+code("""
+# 8) Chat with the model (type messages in the box; 'quit' to stop, 'reset' to start a new conversation).
+# If you updated the code since cell 3, re-run cell 3 first.
+!python -u -m tinylm.chat --ckpt_dir {RUN_DIR}
+""")
+
 nb = {"cells": cells, "nbformat": 4, "nbformat_minor": 5,
       "metadata": {"accelerator": "GPU", "colab": {"provenance": [], "gpuType": "T4"},
                    "kernelspec": {"display_name": "Python 3", "name": "python3"}}}
