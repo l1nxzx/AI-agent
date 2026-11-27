@@ -23,12 +23,10 @@ def builder():
 def test_bank_valid_and_ascii():
     validate_bank()
     for name, d in INTENTS.items():
-        for text in d["user"] + d["bot"]:
+        texts = d["user"] + d["bot"] if "pairs" not in d else [t for pair in d["pairs"] for t in pair]
+        for text in texts:
             assert text.isascii(), (name, text)
-    for d in (persona.FAVORITES, persona.LIKES):
-        for lst in d.values():
-            assert all(t.isascii() for t in lst)
-    assert all(t.isascii() for t in persona.WHAT_IS.values()) and all(t.isascii() for t in persona.UNKNOWN_BOT)
+    assert all(t.isascii() for t in persona.UNKNOWN_BOT + persona.STORY_INTRO + persona.NAME_INTRO_BOT)
 
 
 def test_deterministic(builder):
@@ -46,9 +44,10 @@ def test_structure(builder):
 
 def test_validation_phrasings_are_held_out():
     for d in INTENTS.values():
-        tr, va = set(split_phrasings(d["user"], "train")), set(split_phrasings(d["user"], "val"))
+        users = d["user"] if "pairs" not in d else [q for q, _ in d["pairs"]]
+        tr, va = set(split_phrasings(users, "train")), set(split_phrasings(users, "val"))
         assert va and tr and not (tr & va)
-        assert len(tr) + len(va) == len(d["user"])
+        assert len(tr) + len(va) == len(users)
 
 
 def test_names_are_remembered(builder):
@@ -82,3 +81,38 @@ def test_unknown_user_turn_filter():
 def test_names_include_made_up_ones(builder):
     firsts = {c[0][1].lower() for c in builder.build(800, "train", 9) if "name" in " ".join(t for _, t in c).lower()}
     assert any(not any(n.lower() in f for n in persona.NAMES) for f in firsts)
+
+
+def test_identity_subset_only_uses_identity_intents():
+    sub = PersonaBuilder(STORIES, UNKNOWN, intents=persona.IDENTITY_INTENTS)
+    assert set(sub.names) == set(persona.IDENTITY_INTENTS)
+    convs = sub.build(400, "train", 4)
+    text = " ".join(t for c in convs for _, t in c)
+    assert "bulldozer" not in text and "gummy bear" not in text      # jokes are not in the identity set
+    assert "Petryk" in text
+
+
+def test_unknown_intent_name_rejected():
+    with pytest.raises(ValueError):
+        PersonaBuilder(STORIES, UNKNOWN, intents=["greeting", "nope"])
+
+
+def test_identity_is_consistent_and_honest(builder):
+    """Every bot reply to 'who are you' names Petryk or says it is a language model, and nothing claims to be
+    human or to have internet access."""
+    d = INTENTS["who_are_you"]
+    assert all(("Petryk" in r) for r in d["bot"])
+    allbot = " ".join(r for v in INTENTS.values() for r in (v["bot"] if "pairs" not in v else [b for _, b in v["pairs"]])).lower()
+    assert "i am a person" not in allbot and "i am human" not in allbot
+    for q, r in INTENTS["abilities"]["pairs"]:
+        assert not r.lower().startswith("yes, i am connected")
+
+
+def test_replies_match_their_questions_for_paired_intents(builder):
+    """In paired intents a reply must come with its own question, never a random one."""
+    pairs = dict(INTENTS["abilities"]["pairs"])
+    for conv in builder.build(1500, "train", 11):
+        for (_, user), (_, bot) in zip(conv[::2], conv[1::2]):
+            for q, r in pairs.items():
+                if bot == r:
+                    assert user.lower().rstrip("?.!").replace("'", "") == q.lower().rstrip("?.!").replace("'", "")

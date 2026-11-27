@@ -20,7 +20,7 @@ from .bpe import BPETokenizer
 from .data import (DAILYDIALOG_REPO, DAILYDIALOG_REVISION, SMOLTALK_REPO, TINYSTORIES_REPO, check_and_locate_files,
                    download, read_conversations, read_dailydialog, read_story_texts, write_dataset)
 from .logutil import setup_logging
-from .persona import PersonaBuilder, pick_unknown_user_turns
+from .persona import IDENTITY_INTENTS, PersonaBuilder, pick_unknown_user_turns
 
 
 def main(argv=None):
@@ -32,13 +32,16 @@ def main(argv=None):
     p.add_argument("--max_stories", type=int, default=300_000, help="cap on training stories encoded")
     p.add_argument("--max_val_stories", type=int, default=3000)
     p.add_argument("--tokenizer_stories", type=int, default=30_000, help="stories used to train the tokenizer (chat text is always included)")
-    p.add_argument("--chat_mode", choices=["persona", "real", "dailydialog", "dailydialog_only"], default="persona",
+    p.add_argument("--chat_mode", choices=["persona", "real", "dailydialog", "dailydialog_only", "dailydialog_identity"], default="persona",
                    help="persona: hand-written consistent bot voice (+ real stories and real user questions); "
                         "real: the everyday-conversations data as published; "
                         "dailydialog: real human dialogues (DailyDialog) plus everyday-conversations, no authored text; "
-                        "dailydialog_only: DailyDialog alone (one consistent style)")
+                        "dailydialog_only: DailyDialog alone (one consistent style); "
+                        "dailydialog_identity: DailyDialog plus a small authored identity layer (Petryk)")
     p.add_argument("--persona_train", type=int, default=30_000, help="persona conversations for training")
     p.add_argument("--persona_val", type=int, default=600)
+    p.add_argument("--identity_train", type=int, default=1500,
+                   help="identity conversations mixed into DailyDialog in dailydialog_identity mode (about 2%% of chat tokens)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--smoke", action="store_true", help="use only the small TinyStories validation file, split into train/val (for quick tests)")
     p.add_argument("--force", action="store_true")
@@ -58,7 +61,7 @@ def main(argv=None):
 
     cache = args.cache_dir or os.path.join(args.data_dir, "hf_cache")
     files = check_and_locate_files(smoke=args.smoke, num_story_shards=args.story_shards,
-                                   dailydialog=args.chat_mode in ("dailydialog", "dailydialog_only"))
+                                   dailydialog=args.chat_mode in ("dailydialog", "dailydialog_only", "dailydialog_identity"))
 
     chat_train = read_conversations(download(SMOLTALK_REPO, files["chat_train"], cache))
     chat_val = read_conversations(download(SMOLTALK_REPO, files["chat_test"], cache))
@@ -77,12 +80,23 @@ def main(argv=None):
         story_val = valid_texts[:args.max_val_stories]
     log.info(f"stories: {len(story_train)} train, {len(story_val)} val; conversations: {len(chat_train)} train, {len(chat_val)} val")
 
-    if args.chat_mode in ("dailydialog", "dailydialog_only"):
+    identity_convs = []
+    if args.chat_mode in ("dailydialog", "dailydialog_only", "dailydialog_identity"):
         log.info(f"chat_mode={args.chat_mode}: chat data is entirely real, human-written dialogue (no authored replies)")
         dd_train = read_dailydialog(download(DAILYDIALOG_REPO, files["dd_train"], cache, DAILYDIALOG_REVISION))
         dd_val = read_dailydialog(download(DAILYDIALOG_REPO, files["dd_val"], cache, DAILYDIALOG_REVISION), both_ways=False)
-        if args.chat_mode == "dailydialog_only":
+        if args.chat_mode in ("dailydialog_only", "dailydialog_identity"):
             chat_train, chat_val = dd_train, dd_val
+            if args.chat_mode == "dailydialog_identity":
+                # Identity data is mixed into TRAINING only. Validation stays DailyDialog-only, so the validation
+                # loss is directly comparable with a dailydialog_only run; identity is judged by reading replies.
+                builder = PersonaBuilder(
+                    stories={"train": story_train, "val": story_val},
+                    unknown_user_turns={"train": pick_unknown_user_turns(read_conversations(download(SMOLTALK_REPO, files["chat_train"], cache))),
+                                        "val": pick_unknown_user_turns(read_conversations(download(SMOLTALK_REPO, files["chat_test"], cache)))},
+                    intents=IDENTITY_INTENTS)
+                identity_convs = builder.build(args.identity_train, "train", args.seed, log)
+                chat_train = dd_train + identity_convs
         else:
             chat_train, chat_val = dd_train + chat_train, dd_val + chat_val
         log.info(f"chat: {len(chat_train)} train and {len(chat_val)} val dialogues ({args.chat_mode})")
@@ -107,7 +121,18 @@ def main(argv=None):
 
     sources = {"stories": TINYSTORIES_REPO, "chat": SMOLTALK_REPO + " (everyday-conversations)",
                "files": {k: v for k, v in files.items()}, "smoke": args.smoke, "chat_mode": args.chat_mode}
-    write_dataset(args.data_dir, tok, story_train, story_val, chat_train, chat_val, sources, chat_mode=args.chat_mode)
+    meta = write_dataset(args.data_dir, tok, story_train, story_val, chat_train, chat_val, sources, chat_mode=args.chat_mode)
+    if identity_convs:
+        from .data import ROLE_TO_MARKER, encode_conversation
+        id_tokens = sum(len(encode_conversation(tok, c)) for c in identity_convs)
+        total = meta["splits"]["chat_train"]["tokens"]
+        log.info(f"identity layer: {len(identity_convs)} conversations = {id_tokens:,} tokens = {id_tokens / total * 100:.1f}% of "
+                 f"the {total:,} chat training tokens ({len(identity_convs) / len(chat_train) * 100:.1f}% of conversations)")
+        with open(os.path.join(args.data_dir, "identity_examples.txt"), "w", encoding="utf-8") as f:
+            f.write("IDENTITY TRAINING EXAMPLES (first 60 of the authored conversations mixed into DailyDialog)\n\n")
+            for conv in identity_convs[:60]:
+                f.write("\n".join(f"{'user' if r == 'user' else 'bot '}: {t}" for r, t in conv) + "\n" + "-" * 60 + "\n")
+        log.info(f"wrote {os.path.join(args.data_dir, 'identity_examples.txt')} (readable)")
 
 
 if __name__ == "__main__":
