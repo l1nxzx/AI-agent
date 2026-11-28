@@ -4,7 +4,7 @@ Living document. One section per trained model, a comparison table, and cross-cu
 added at the end of section 4 and to the tables in section 5. Evidence (verbatim transcripts and item-level
 scores) is stored next to this file in `transcripts/` and `scores/`.
 
-Last updated after: run `tiny_dailydialog_identity` (training metrics only; chat transcript pending). Models
+Last updated after: run `tiny_dailydialog_identity` (metrics and standard-set transcript). Models
 covered: 6 full Colab runs (four tiny at 2.16M parameters, two small at 11.4M).
 
 ## 1. Summary
@@ -38,7 +38,13 @@ covered: 6 full Colab runs (four tiny at 2.16M parameters, two small at 11.4M).
   schedule from 15,000 to 10,000 steps did not remove it. The saved best checkpoint is what chat uses.
 * Run 6 (`tiny_dailydialog_identity`, tiny + the Petryk identity layer) has the same validation losses as run 3 within
   noise (mixed 2.1550 against 2.1570), so mixing the identity data into DailyDialog costs nothing on the real
-  dialogue. Whether it fixed identity and "I do not know" is not yet judged: no chat transcript is on file.
+  dialogue. Its chat shows the identity working for the first time: on the standard set, 6 of the 7 "who are you /
+  what are you / what is your name" replies name Petryk and describe it consistently (earlier runs gave a different
+  name every time), and it copied a name from the conversation ("You are Blake. You told me a moment ago."). The same
+  transcript shows side effects: identity lines leak into unrelated prompts ("Thank you" -> "I am Petryk, a small
+  language model..."), the honest "I do not know" fires on a story request, and short factual questions still get
+  invented answers. Rubric mean 1.02 (48 replies, 25% sensible, 23% nonsense), measured under different conditions
+  from the other runs (standard set, repetition penalty 1.2), so it is not directly comparable.
 * Open questions: does a small authored identity layer fix identity and "I do not know"; can early stopping or a
   smaller chat share keep the best generalization; how much do the numbers move with sampling settings (not yet
   tested).
@@ -412,10 +418,59 @@ Matched comparison with run 3 (same model and DailyDialog data, no identity laye
 2.1570. The differences (-0.0055, +0.0045 and -0.0020) are within noise, so the identity layer did not hurt the model's
 real-dialogue loss. The end-of-run sample lines were a coherent story ("Once upon a time, there was a girl named
 Jane...") and the chat reply "I'm fine." to "Hi, how are you?" (sampling at temperature 0.8, which does not show identity
-behavior). **Chat quality has not been assessed:** no transcript was provided. To judge it, run the standard set on this
-run (`tinylm.eval_chat`, last cell of the chat notebook) and score it; the questions that matter are the identity group
-(consistency across the three "who are you" asks), the unknown group (honest "I do not know" against invented
-answers) and the greeting group (still natural, as in run 5).
+behavior). Chat quality: the standard set (`tinylm.eval_chat`: 37 entries, 48 replies, temperature 0.5, top-k 20, repetition
+penalty 1.2, seed 0) and a short interactive chat were provided (`transcripts/tiny_dailydialog_identity.txt`; item-level
+scores in `scores/tiny_dailydialog_identity.json`; only the standard set is scored). **This is the first run judged
+on the standard set and with a repetition penalty, so its scores are not directly comparable with runs 1-5** (ad-hoc
+prompts, no penalty). The next step for a fair comparison is to run `eval_chat` on this checkpoint with
+`--repetition_penalty 1.0` (and on the other saved models).
+
+| group | n | mean | group | n | mean |
+|---|---|---|---|---|---|
+| identity | 10 | 1.40 | topic | 7 | 1.00 |
+| robust | 3 | 1.33 | social | 3 | 1.00 |
+| greeting | 7 | 1.29 | story | 2 | 1.00 |
+| loop | 4 | 1.25 | context | 6 | 0.67 |
+| unknown / factual | 6 | 0.17 | **all** | 48 | **1.02** (25% scored 2, 23% scored 0) |
+
+Findings, with evidence:
+
+1. **Identity is learned and stable.** "Who are you?" asked three times gave Petryk three times ("I am Petryk, a language
+   model. I was trained from scratch on stories and everyday conversations."), "What are you?" -> "I am Petryk. I am not a
+   person. I am a small language model, so I know much less than a large one." In total 6 of the 7 who/what/name asks name
+   Petryk; one also contradicts itself ("My name is Peter. I am Petryk...") and one is a non sequitur ("I like classical
+   music."). The earlier runs gave a different name or title on nearly every ask. The honest capability statements are
+   also learned ("I cannot look things up, and my knowledge is limited, so I will tell you when I am not sure.").
+2. **Name copying works.** "My name is Blake." then "What is my name?" -> "You are Blake. You told me a moment ago." (the
+   first time any model reproduced a name from the conversation).
+3. **Natural, in-voice greetings and politeness.** "Hi", "Hey" and "Hello" all got an introduction by Petryk; in the
+   interactive chat "Tell me, how are you doing?" -> "I am doing well, thank you. How are you?", "I like you" -> "I
+   appreciate that. Thank you.", and "So tell me a short story." produced a coherent story ("Once upon a time there was
+   a girl named Sue...") despite one invented word.
+4. **Identity lines leak into unrelated prompts.** "Hello, how are you?" -> an introduction instead of an answer; "I am
+   tired." -> "I am good with conversation, and I cannot look things up..."; "Thank you" -> "I am Petryk, a small language
+   model..."; "hi how r u" -> "I do not sleep, get tired or get lonely..."; "I love you" -> "See you later. Take care."
+   The identity text has become the model's default fluent reply for short prompts. In the earlier runs the default
+   was random lines from the office and shop scripts; it is now the more sensible, but still wrong, identity lines.
+5. **"I do not know" is learned as a form but triggered on the wrong things.** "Why" -> "I do not know. Please check a
+   reliable source for that." is a good use. But "Tell me a story about a dog." -> "I cannot answer that reliably, and I
+   do not want to invent an answer.", and the short factual questions still get invented garbage ("What is the
+   capital of France?" -> "The capital of the nationaliod, the private customs and the norx"; "What is 2 plus 2?" ->
+   "It's 20 yuan a month."). The likely reason is the training data: the questions Petryk declines come from real
+   everyday-conversations user messages, which are long and specific (at least 8 words), so the habit did not transfer to
+   short factual questions. It is a data gap, not a model failure.
+6. **The real-dialogue ability is unchanged and weak.** "What do you do for work?" -> "I work for working hard and
+   produce personal position."; "Can you recommend a good restaurant?" -> "Yes, I would like a coffee bargain."; the
+   long garbled reply to "What animal do I like?" mixes an identity line with a story fragment. The tiny model's validation
+   loss matches run 3, so this is expected.
+7. **The repetition penalty may be hurting templated replies.** Some replies look like two templates blended
+   ("I appreciate that. showed me a moment ago." from "I appreciate that." and "You told me a moment ago."). The
+   penalty (1.2) discourages reusing words, which fights memorized sentences. Running the same checkpoint with
+   `--repetition_penalty 1.0` would separate this effect; it has not been done.
+
+Verdict: the identity layer does what it was built for (a stable, honest self-description and name copying) at no
+cost to the real-dialogue loss, but at 2M parameters it also over-applies the identity text and does not generalize
+"I do not know" to short factual questions.
 
 ## 5. Comparison
 
@@ -425,13 +480,16 @@ answers) and the greeting group (still natural, as in run 5).
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | small_dailydialog | 56 | 0.95 | 25% | 30% | 0.67 (6) | 1.50 (8) | 0.75 (4) | 1.29 (7) | 0.50 (4) | 0.80 (5) | 0.50 (2) | 1.31 (13) | 0.14 (7) |
 | small_dailydialog_only | 46 | 1.15 | 26% | 11% | 0.83 (6) | 1.33 (6) | 1.50 (4) | 1.25 (8) | 1.00 (4) | - | 1.00 (5) | 1.33 (9) | 0.75 (4) |
+| tiny_dailydialog_identity | 48 | 1.02 | 25% | 23% | 0.67 (6) | 1.29 (7) | 1.40 (10) | 1.25 (4) | 1.33 (3) | 1.00 (3) | 1.00 (2) | 1.00 (7) | 0.17 (6) |
 | tiny_dailydialog_only | 57 | 0.81 | 23% | 42% | 0.67 (6) | 0.56 (9) | 1.30 (10) | - | - | 0.80 (5) | 1.00 (3) | 1.20 (10) | 0.36 (14) |
 
-Runs 1 and 2 are not yet scored item by item (see section 3.3). The prompt lists differ between runs (they are the
-user's own prompts), the `social`, `loop` and `robust` groups were not asked in every run, and the mixed run 4 used
-different chat data from runs 3 and 5, so only the overlapping groups are comparable and differences of a few
-tenths are within the noise of a single rater. The data-matched pairs are run 3 (tiny) with run 5 (small), both
-DailyDialog only, and run 2 (tiny, not scored item by item) with run 4 (small), both mixed.
+Conditions differ: runs 3, 4 and 5 were scored on the user's own ad-hoc prompts with no repetition penalty; run 6 was
+scored on the standard set with a penalty of 1.2. Runs 1 and 2 are not scored item by item. The `social`, `loop`
+and `robust` groups were not asked in every run, the mixed run 4 used different chat data from runs 3 and 5, and
+differences of a few tenths are within the noise of a single rater, so only large, consistent differences mean
+anything. The data-matched pairs are run 3 (tiny) with runs 5 (small) and 6 (tiny + identity), all DailyDialog
+based, and run 2 (tiny, not scored) with run 4 (small), both mixed. The fair test for run 6 against run 3 is the
+standard set on both with the same penalty, which is the first item in section 7.
 
 ### 5.2 Training metrics on file
 
@@ -450,16 +508,17 @@ DailyDialog-only in all three).
 
 ### 5.3 Qualitative comparison
 
-| aspect | run 1 | run 2 | run 3 | run 4 (small, mixed) | run 5 (small, DD only) |
-|---|---|---|---|---|---|
-| reply length | long | mixed | short | short | short |
-| on-topic | no | rarely | sometimes (generic) | often, simple questions | often, simple questions |
-| consistent voice | invents topics | two voices | one voice | mostly one, business register | one voice, shop/office scenes |
-| identity | invents ("many conductures") | random | random names | invented corporate titles | repeated "guy over there", name James |
-| invents facts/numbers | yes, heavily | some | little | yes, numbers | fluent evasions, wrong numbers |
-| context use | not tested | weak | weak | weak, copies its own replies | weak |
-| nonsense replies (score 0) | not scored | not scored | 42% | 30% | 11% |
-| stories (text mode) | OK | OK | not shown | best (val 1.56) | similar (val 1.59) |
+| aspect | run 1 | run 2 | run 3 | run 4 (small, mixed) | run 5 (small, DD only) | run 6 (tiny, identity) |
+|---|---|---|---|---|---|---|
+| reply length | long | mixed | short | short | short | short to medium |
+| on-topic | no | rarely | sometimes (generic) | often, simple questions | often, simple questions | often for identity, rarely for real chat |
+| consistent voice | invents topics | two voices | one voice | mostly one, business register | one voice, shop/office scenes | Petryk voice, plus DailyDialog fragments |
+| identity | invents ("many conductures") | random | random names | invented corporate titles | repeated "guy over there", name James | Petryk, 6 of 7 asks |
+| invents facts/numbers | yes, heavily | some | little | yes, numbers | fluent evasions, wrong numbers | yes (short factual questions) |
+| says "I do not know" | no | no | no | no | no | yes, but mistriggered |
+| context use | not tested | weak | weak | weak, copies its own replies | weak | name copied correctly; otherwise weak |
+| nonsense replies (score 0) | not scored | not scored | 42% | 30% | 11% | 23% |
+| stories (text mode) | OK | OK | not shown | best (val 1.56) | similar (val 1.59) | similar to run 3 (val 1.83) |
 
 ## 6. Cross-cutting findings
 
@@ -475,8 +534,8 @@ DailyDialog-only in all three).
    groups such as `unknown` rise (0.36 -> 0.75) without any answer becoming correct. Facts, arithmetic, identity
    and memory are not learned at 2M or 11M parameters on this data.
 5. **No uncertainty without data for it.** Real dialogue data never says "I do not know, I am a small model", so
-   the model never does; it gives fluent evasions or invented names and numbers. (Preliminary evidence in the
-   appendix suggests this can be taught with data.)
+   the models of runs 1-5 never do; they give fluent evasions or invented names and numbers. Run 6 learned the phrase
+   from authored data, but only for the kind of question it was trained to decline (see 4.6).
 6. **Repetition and self-copying persist at both sizes.** Out-of-domain prompts make the model lock onto words
    ("wine", run 3) and repeat its own earlier replies ("I love you, too." for unrelated prompts in run 4; "I love
    you too." three times for "I hate you" in run 5). Sampling-time repetition control has not been tried yet.
@@ -484,21 +543,29 @@ DailyDialog-only in all three).
    step 8,000 in run 5, i.e. after about 14-16 passes over the chat data, and worse afterwards, even with the shorter
    schedule of run 5. The tiny model reached 14 passes without overfitting. Saving the best checkpoint by validation
    loss protects the result. More chat data, a lower chat share or early stopping would stop wasted training.
-8. **Story ability is stable across chat data variants** and mostly comes from the TinyStories mixture; it improves
+8. **An authored identity layer works at 2M parameters, at no cost on real dialogue.** Mixing about 3.4% identity
+   data into DailyDialog gave a stable self-description (6 of 7 name asks), honest statements of its limits and name
+   copying, with the DailyDialog validation loss unchanged (2.1550 against 2.1570). Its side effects are leakage
+   of identity lines into unrelated prompts and an "I do not know" that fires on the wrong inputs, both of which look
+   like data-design problems (the distribution of the declined questions, the share of identity data) and can be
+   tuned.
+9. **Story ability is stable across chat data variants** and mostly comes from the TinyStories mixture; it improves
    with size.
 
 ## 7. Next experiments
 
-1. Paste the `EVAL` lines (one per 500 steps) for runs 4 and 5 to see exactly where the chat loss turned (optional).
-2. Run the standard set on the saved models of runs 1-5 (`tinylm.eval_chat`) and score them, so the comparison in
-   5.1 uses identical prompts. Run 2 is the most useful one to add, as the partner of run 4.
-3. Early stopping is implemented (`train.early_stop_patience`, default 3 validations without a new best mixed
-   loss); use it in the next `small` or `medium` run and record where it stops.
-4. A repetition penalty is implemented (`--repetition_penalty`, default 1.2 in chat and `eval_chat`). Measure it: run
-   the standard set on the saved models with 1.0, 1.1, 1.2 and 1.3 and score the loops and non-sequitur rate. A
-   quick test on a weak CPU model (not one of the runs above) showed loops broken at 1.2 and drift at 1.4.
-5. Try a small authored identity layer on top of real data (a few percent of the chat share, covering greetings,
-   identity and "I do not know"). This is a data change only; no rules in the model or code.
+1. Run the standard set on the saved models of runs 1-6 (`tinylm.eval_chat`), once with `--repetition_penalty 1.0` and once
+   with the default 1.2, and score them, so the comparisons use identical prompts and settings. For run 6 this also
+   separates the penalty's effect on templated replies (finding 7 in 4.6). Run 2 is the most useful addition.
+2. Fix the identity data's side effects: add SHORT real factual questions (for example from a question-answering
+   dataset, after checking its format and license) to the questions Petryk declines, so "I do not know" covers
+   "What is the capital of France?" and not only long everyday-conversations messages; add more story requests so they
+   are not declined; and try a smaller identity share (for example 2%) to reduce leakage into unrelated prompts.
+3. Train `small` on `dailydialog_identity` (about 30 minutes, early stopping on) and see whether the larger model
+   leaks the identity less while keeping the benefits.
+4. Tune the repetition penalty on the standard set (1.0, 1.1, 1.2, 1.3) once the checkpoints above are evaluated.
+5. Early stopping is implemented (`train.early_stop_patience`, default 3): use it in every new run and record
+   where it stops.
 6. Hold off on `medium` (20M) until there is more chat data: it would overfit the chat set even sooner.
 7. Record sampling settings and the final training log lines for every new run, so the tables have no gaps.
 
