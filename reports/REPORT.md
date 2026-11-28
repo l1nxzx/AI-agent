@@ -652,6 +652,34 @@ factual questions the identity layer can teach Petryk to decline:
 The standard chat set's own prompts (for example "What is 2 plus 2?", "What is the capital of France?") are filtered
 out of the training questions, and the pairs they use are held out of the arithmetic data, so those tests stay fair.
 
+### A.4 Knowledge search for factual questions (retrieval), measurements
+
+The identity-layer approach of declining factual questions was dropped (the project owner wants answers, not refusals).
+A small model cannot store facts, so the plan is retrieval: a program finds relevant passages (BM25 keyword search,
+written from scratch) and a reader model answers from them. Corpus and search are built and measured; the reader model
+is not yet trained, so there are no answer-quality results yet.
+
+| item | value |
+|---|---|
+| sources | Simple English Wikipedia (241,787 articles, 43.6M words; CC BY-SA 3.0 and GFDL) and the OpenStax textbooks (CC BY 4.0; 76 books, biology included) |
+| passages | 923,750 (about 60-130 words each) |
+| size on disk | 683 MB (456 MB with only the five biology books: 658,606 passages) |
+| build time / search time | about 70 s / about 4 ms per question |
+
+Retrieval coverage (answer text found in the top-k passages; 1,000 real questions each; answers used only for this check):
+
+| questions | top-1 | top-3 | top-5 | corpus |
+|---|---|---|---|---|
+| SciQ validation (science) | 36.7% | 51.2% | 58.2% | all books |
+| SciQ validation (science) | 34.6% | 48.8% | 55.8% | biology books only |
+| NQ-Open validation (general) | 16.9% | 26.9% | 32.6% | all books |
+| NQ-Open validation (general) | 17.6% | 27.2% | 32.1% | biology books only |
+
+Counting the article title three or six times in the index made no meaningful difference (within about one point). The
+string-match measure is generous (the answer text can appear in a passage that does not really answer the question), so
+the real ceiling for end-to-end accuracy is lower than these numbers. Known weakness of keyword search: vocabulary
+mismatch ("make food from sunlight" does not match "photosynthesis").
+
 ## Appendix B. Adding a model to this report
 
 1. Train, then record: run folder, config, chat mode, final EVAL line (stories, chat, mixed) and wall time from

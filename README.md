@@ -86,6 +86,29 @@ Checkpoints stay on your Drive in `MyDrive/tinylm/runs/<config>_<chat mode>/` (t
 question list (`python -m tinylm.eval_chat --ckpt_dir <run folder>`). The run folder also holds `train.log` and
 `metrics.jsonl`.
 
+## Knowledge search (retrieval), work in progress
+
+A 2M-20M parameter model cannot store facts, so for factual questions the plan is: a program finds the relevant
+text, and the model reads it and writes the answer. The pieces built so far:
+
+* `tinylm/retrieval.py`: a from-scratch BM25 search engine (no libraries, no learned parts). The question's own words
+  are the query; every passage is scored by how many of those words it contains, weighted by how rare each word is.
+  There are no per-question rules or stored answers. The language model never searches.
+* `python -m tinylm.build_corpus --corpus_dir corpus`: downloads Simple English Wikipedia (general knowledge, CC BY-SA 3.0
+  and GFDL, 241,787 articles, 43.6M words) and the OpenStax textbooks (CC BY 4.0, biology books plus about 70 others),
+  splits them into passages of about 60-130 words and builds the index. Result: 923,750 passages, 683 MB on disk, built
+  in about 70 seconds; a search takes about 4 ms. (`--books biology` keeps only the five biology books: 658,606 passages,
+  456 MB.)
+* `python -m tinylm.eval_retrieval --corpus_dir corpus`: measures how often one of the top-k passages contains the true
+  answer text, on real questions (answers are used only for this check). Measured on 1,000 questions each:
+  science questions (SciQ) top-1 36.7%, top-3 51.2%, top-5 58.2%; general questions (NQ-Open) top-1 16.9%, top-3 26.9%,
+  top-5 32.6%. So the search finds an answer-bearing passage for about half of the science questions and a third of the
+  general ones; the rest is not in the corpus or is missed by keyword search (for example a question that says
+  "make food from sunlight" does not contain the word "photosynthesis").
+
+Still to build: the reader training data (passage + question -> answer, from SQuAD 2.0 and SciQ), training the model on
+it, and the chat and evaluation tools that tie search and reader together.
+
 ## Model sizes
 
 Size is entirely a config setting. Parameter count is printed when training starts.
