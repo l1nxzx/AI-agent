@@ -31,6 +31,7 @@ REPO = "l1nxzx/AI-agent"
 BRANCH = "claude/optimistic-faraday-l0rq48"   # change to "main" once merged
 DRIVE_DIR = "/content/drive/MyDrive/tinylm"   # data, checkpoints and logs live here
 OVERRIDES = ""             # optional, e.g. "train.max_steps=2000 train.batch_size=32"
+TAG = ""                   # optional suffix such as "_v2": keeps a new run and its data apart from earlier ones
 CHAT_MODE = "dailydialog_identity"  # dailydialog_identity: real dialogues + small Petryk identity layer | dailydialog_only | dailydialog | persona | real
 """)
 
@@ -71,8 +72,8 @@ code("""
 # The result is stored on Drive, so this only runs once per vocab size.
 import json
 VOCAB = json.load(open(f"configs/{CONFIG}.json"))["model"]["vocab_size"]
-DATA_DIR = f"{DRIVE_DIR}/data_v{VOCAB}_{CHAT_MODE}"
-RUN_DIR = f"{DRIVE_DIR}/runs/{CONFIG}_{CHAT_MODE}"
+DATA_DIR = f"{DRIVE_DIR}/data_v{VOCAB}_{CHAT_MODE}{TAG}"
+RUN_DIR = f"{DRIVE_DIR}/runs/{CONFIG}_{CHAT_MODE}{TAG}"
 !python -u -m tinylm.prepare_data --data_dir {DATA_DIR} --cache_dir /content/hf_cache --vocab_size {VOCAB} --chat_mode {CHAT_MODE}
 """)
 

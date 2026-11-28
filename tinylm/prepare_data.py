@@ -21,7 +21,7 @@ from .data import (DAILYDIALOG_REPO, DAILYDIALOG_REVISION, NQ_REPO, SMOLTALK_REP
                    check_and_locate_files, download, read_conversations, read_dailydialog, read_nq_open_questions,
                    read_story_texts, write_dataset)
 from .logutil import setup_logging
-from .persona import IDENTITY_INTENTS, PersonaBuilder, pick_unknown_user_turns
+from .persona import IDENTITY_INTENTS, PERSONA_VERSION, PersonaBuilder, pick_unknown_user_turns
 
 
 def main(argv=None):
@@ -55,7 +55,12 @@ def main(argv=None):
     if os.path.exists(meta_path) and not args.force:
         with open(meta_path) as f:
             meta = json.load(f)
-        if meta["vocab_size"] == args.vocab_size and meta.get("chat_mode", "real") == args.chat_mode:
+        authored = args.chat_mode in ("persona", "dailydialog_identity")
+        stale = authored and meta.get("persona_version") != PERSONA_VERSION
+        if stale:
+            log.info(f"existing data was built with authored-data version {meta.get('persona_version')}, current is "
+                     f"{PERSONA_VERSION}; rebuilding")
+        if meta["vocab_size"] == args.vocab_size and meta.get("chat_mode", "real") == args.chat_mode and not stale:
             log.info(f"{meta_path} already exists (vocab_size={args.vocab_size}, chat_mode={args.chat_mode}); "
                      "nothing to do (use --force to rebuild)")
             return
@@ -131,6 +136,10 @@ def main(argv=None):
     sources = {"stories": TINYSTORIES_REPO, "chat": SMOLTALK_REPO + " (everyday-conversations)",
                "files": {k: v for k, v in files.items()}, "smoke": args.smoke, "chat_mode": args.chat_mode}
     meta = write_dataset(args.data_dir, tok, story_train, story_val, chat_train, chat_val, sources, chat_mode=args.chat_mode)
+    if args.chat_mode in ("persona", "dailydialog_identity"):
+        meta["persona_version"] = PERSONA_VERSION
+        with open(meta_path, "w") as f:
+            json.dump(meta, f, indent=2)
     if identity_convs:
         from .data import ROLE_TO_MARKER, encode_conversation
         id_tokens = sum(len(encode_conversation(tok, c)) for c in identity_convs)

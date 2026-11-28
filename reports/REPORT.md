@@ -624,6 +624,17 @@ answered with a story, a sign the layer was too large at 11.7%. The data was fix
 confusable question was removed); the others are expected to improve with the longer Colab run and the smaller
 real share, and need checking there.
 
+A second CPU sanity run used the v2 identity data (NQ-Open short questions, simple arithmetic, more story phrasings) with
+the layer enlarged to 5,000 conversations, 10.2% of the chat tokens (the Colab default is 1,000 conversations, about
+2%), same 1,800-step CPU setup: val stories 2.5177, val chat 3.2110, mixed 2.8644. **It was inconclusive.** The model had
+the identity phrases and the decline phrases but chose them wrongly: "What is your name?" got the name-memory template
+("Your name is Whuriousn."), "What is the capital of France?" and "Which is bigger, 9 or 12?" got an identity line, simple
+sums ("What is 3 plus 5?", "What is 7 minus 4?") were declined instead of answered, and "Do you want to go to the movies
+tonight?" got "I do not know. I have no heart...". One thing worked: "Who is the president of Spain?" (a factual
+question not in the training data) got "I do not know that. My knowledge is very limited, and I would rather say so than
+guess." 1,800 CPU steps (7.4M tokens) is far too little for the model to separate these cases, so the arithmetic and
+decline behavior can only be judged on a Colab run.
+
 ### A.3 Datasets checked for short factual questions
 
 Checked on the Hugging Face Hub (existence, files, license and, for four of them, the real format) to find short

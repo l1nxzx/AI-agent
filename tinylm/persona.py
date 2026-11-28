@@ -24,6 +24,9 @@ import random
 import re
 from collections import Counter
 
+# Bump this whenever the authored data changes, so prepare_data rebuilds data folders made with an older version.
+PERSONA_VERSION = 2   # 1: first Petryk bank; 2: NQ-Open short questions, arithmetic, more story phrasings
+
 HOLDOUT_EVERY = 5  # phrasing i is held out for validation when i % 5 == 4
 
 # --------------------------------------------------------------------------------------------
