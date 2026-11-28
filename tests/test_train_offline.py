@@ -98,9 +98,9 @@ def test_eval_chat_runs_standard_set(setup, capsys):
     eval_main(["--ckpt_dir", out, "--max_new_tokens", "4", "--device", "cpu"])
     printed = capsys.readouterr().out
     assert printed.count("you:") >= len(STANDARD_SET)
-    result = json.load(open(os.path.join(out, "eval_chat_best.json")))
+    result = json.load(open(os.path.join(out, "eval_chat_best_rp1.0.json")))
     assert len(result["records"]) == sum(r for _, _, r in STANDARD_SET)
-    assert "=== identity ===" in open(os.path.join(out, "eval_chat_best.txt")).read()
+    assert "=== identity ===" in open(os.path.join(out, "eval_chat_best_rp1.0.txt")).read()
 
 
 def test_early_stopping(setup, monkeypatch):

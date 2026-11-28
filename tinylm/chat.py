@@ -67,9 +67,10 @@ def main(argv=None):
     p.add_argument("--max_new_tokens", type=int, default=120)
     p.add_argument("--temperature", type=float, default=0.5)
     p.add_argument("--top_k", type=int, default=20)
-    p.add_argument("--repetition_penalty", type=float, default=1.2,
-                   help="1.0 = off. Discourages the bot from reusing words from its own earlier replies and from "
-                        "repeating itself inside a reply (default 1.2)")
+    p.add_argument("--repetition_penalty", type=float, default=1.0,
+                   help="1.0 = off (default). Values above 1 discourage the bot from reusing words from its own earlier "
+                        "replies and from repeating itself inside a reply; try 1.05-1.15 only if a model loops. At 1.2 it "
+                        "made one model's replies worse")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = p.parse_args(argv)

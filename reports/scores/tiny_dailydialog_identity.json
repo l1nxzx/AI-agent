@@ -1,5 +1,5 @@
 {
- "run": "tiny_dailydialog_identity",
+ "run": "tiny_dailydialog_identity (penalty 1.2)",
  "rubric_version": 1,
  "note": "Standard set v1 (tinylm.eval_chat), temperature 0.5, top_k 20, repetition_penalty 1.2, seed 0; best checkpoint (step 8000). NOT the same conditions as the other runs (ad-hoc prompts, no repetition penalty). The interactive chat in the transcript file is not scored. Single rater (the assistant), unblinded.",
  "items": [

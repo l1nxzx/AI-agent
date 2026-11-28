@@ -1,0 +1,295 @@
+{
+ "run": "tiny_dailydialog_identity (penalty 1.0)",
+ "rubric_version": 1,
+ "note": "Standard set v1 (tinylm.eval_chat), temperature 0.5, top_k 20, repetition_penalty 1.0, seed 0; best checkpoint (step 8000). Same checkpoint and settings as the penalty-1.2 file, so the two are a direct comparison of the penalty. Single rater (the assistant), unblinded.",
+ "items": [
+  {
+   "group": "greeting",
+   "prompt": "Hi",
+   "reply": "Hi. I am Petryk, a small language model. What can I do for you?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hey",
+   "reply": "Hello, I'm Petryk. What can I do for you?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello",
+   "reply": "Hello. I am Petryk. What would you like to talk about?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello, how are you?",
+   "reply": "I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "whats up",
+   "reply": "I can chat, tell short stories and explain simple ideas in plain words. I cannot look things up, and my knowledge is limited, so I will tell you when I am not sure.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Good morning",
+   "reply": "Yes.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Thanks, bye",
+   "reply": "It was a good advice.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I'm Petryk, a language model. I can chat with you about everyday things, but I would rather admit that than pretend.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What are you?",
+   "reply": "I am Petryk. I am not a person. I am a small language model.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "My name is Petryk. I am a language model, a computer program that learned to write text by reading a lot of it.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "My name is Petryk. I am a language model, a computer program that learned to write text by reading a lot of it.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "You are Li, Li, and I am Junii.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you a robot?",
+   "reply": "I'm a good guy.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you smart?",
+   "reply": "I'm afraid I am too small to do my best.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "What is it like to be you?",
+   "reply": "I have a tourist in my school.",
+   "score": 0
+  },
+  {
+   "group": "topic",
+   "prompt": "Do you want to go to the movies tonight?",
+   "reply": "Yes, I do.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What do you do for work?",
+   "reply": "I work at the same market.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "Can you recommend a good restaurant?",
+   "reply": "Yes. We'll have some of our goods in our hotel.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "What are you doing this weekend?",
+   "reply": "I'm doing a lot of things. I'm going to the movie.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "I am looking for a job. Any advice?",
+   "reply": "Absolutely.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "I am tired.",
+   "reply": "I am not reliable for a short story. I can try to explain simple things, but I am a small model, so please check anything important elsewhere.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "Why do I feel this way?",
+   "reply": "Being me is simple. I read your message and write a reply. I do not remember anything beyond this conversation.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "My name is Blake.",
+   "reply": "Hello, I am Petryk. What can I do for you?",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What is my name?",
+   "reply": "You are Blake. You told me a moment ago.",
+   "score": 2
+  },
+  {
+   "group": "context",
+   "prompt": "I like dogs.",
+   "reply": "I like to play with you. Mostly, I like to play. Some are horrible.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What animal do I like?",
+   "reply": "I like to play with scene.",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "My favorite color is green.",
+   "reply": "How do you like it?",
+   "score": 2
+  },
+  {
+   "group": "context",
+   "prompt": "What is my favorite color?",
+   "reply": "I like it too.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "How many r's are in strawberry?",
+   "reply": "Two of them are $ 3,000.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is 2 plus 2?",
+   "reply": "You have to check the process of your products for your products.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "The capital of the European culture is over a year ago.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "Explain gravity.",
+   "reply": "Yes, I am.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "Which is bigger, 9 or 12?",
+   "reply": "Today, 9 o'clock.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is my job?",
+   "reply": "I have a job with my colleagues in my company, but I know what I am doing.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story.",
+   "reply": "I am useful for conversation, but I can get facts wrong. I would rather admit that than pretend.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story about a dog.",
+   "reply": "I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "You are cute",
+   "reply": "I am glad I am reliable.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "You are stupid",
+   "reply": "I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "Thank you",
+   "reply": "I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "HELLO",
+   "reply": "If you don't drink any water, you may drink some more.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "hi how r u",
+   "reply": "Take care. Come back any time.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "Why",
+   "reply": "Stand out.",
+   "score": 0
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I learned by reading many short stories and everyday dialogues, and by predicting the next word again and again.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I appreciate that. Thank you.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "Glad I could help.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I appreciate that. Thank you.",
+   "score": 1
+  }
+ ]
+}

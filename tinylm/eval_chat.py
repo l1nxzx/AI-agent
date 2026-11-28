@@ -43,7 +43,7 @@ STANDARD_SET = [
 ]
 
 
-def run_eval(model, tok, temperature=0.5, top_k=20, max_new_tokens=80, seed=0, repetition_penalty=1.2):
+def run_eval(model, tok, temperature=0.5, top_k=20, max_new_tokens=80, seed=0, repetition_penalty=1.0):
     gen = torch.Generator().manual_seed(seed)
     records = []
     for group, turns, repeats in STANDARD_SET:
@@ -75,7 +75,7 @@ def main(argv=None):
     p.add_argument("--temperature", type=float, default=0.5)
     p.add_argument("--top_k", type=int, default=20)
     p.add_argument("--max_new_tokens", type=int, default=80)
-    p.add_argument("--repetition_penalty", type=float, default=1.2, help="1.0 = off (as in the first report transcripts)")
+    p.add_argument("--repetition_penalty", type=float, default=1.0, help="1.0 = off (default, as in the report transcripts)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = p.parse_args(argv)
@@ -87,8 +87,7 @@ def main(argv=None):
               f"repetition_penalty {args.repetition_penalty}, seed {args.seed}\n")
     records = run_eval(model, tok, args.temperature, args.top_k, args.max_new_tokens, args.seed, args.repetition_penalty)
     text = header + format_records(records)
-    suffix = "" if args.repetition_penalty == 1.2 else f"_rp{args.repetition_penalty}"
-    base = os.path.join(args.ckpt_dir, f"eval_chat_{args.which}{suffix}")
+    base = os.path.join(args.ckpt_dir, f"eval_chat_{args.which}_rp{args.repetition_penalty}")   # the penalty is in the name
     with open(base + ".txt", "w", encoding="utf-8") as f:
         f.write(text)
     with open(base + ".json", "w", encoding="utf-8") as f:

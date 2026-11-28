@@ -195,10 +195,11 @@ different model config is refused.
 * **Repetition penalty** (`--repetition_penalty` in `sample`, `chat` and `eval_chat`): tokens already used become
   less likely (a positive logit is divided by the penalty, a negative one multiplied by it). In chat it covers the
   words of the bot's own earlier replies and the reply being written; the end-of-reply token is never penalized.
-  Defaults: 1.2 in `chat` and `eval_chat`, 1.0 (off) in `sample`. In a quick test on a weak CPU model 1.2 broke an
-  identical-reply loop and 1.4 also made replies drift, so treat the value as something to tune per model, for
-  example `python -m tinylm.eval_chat --ckpt_dir <run> --repetition_penalty 1.0` and then `1.1`, `1.2`, `1.3`
-  (each writes its own transcript file).
+  Default 1.0 (off) everywhere. On a weak CPU model 1.2 broke an identical-reply loop and 1.4 made replies drift, but on
+  a trained Colab model (the identity run) 1.2 made the replies worse than no penalty (more nonsense, blended
+  template sentences) and that model did not loop at all. Use it only if a model loops, starting around 1.05-1.15, and
+  compare with the standard set: `python -m tinylm.eval_chat --ckpt_dir <run> --repetition_penalty 1.1` (the penalty
+  is part of each transcript's file name).
 
 ### Sampling (`sample.py`)
 

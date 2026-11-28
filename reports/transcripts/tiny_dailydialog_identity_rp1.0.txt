@@ -1,0 +1,159 @@
+Run: tiny_dailydialog_identity, standard chat set (tinylm.eval_chat) with the repetition penalty OFF (1.0). Same checkpoint
+(best, step 8000), temperature, top-k and seed as tiny_dailydialog_identity.txt (which used penalty 1.2), so the two
+are a direct comparison of the penalty. Pasted by the user, verbatim.
+
+standard chat set | run tiny_dailydialog_identity | best checkpoint, step 8000, val_loss 2.1549775130748747 | temperature 0.5, top_k 20, repetition_penalty 1.0, seed 0
+=== greeting ===
+you: Hi
+bot: Hi. I am Petryk, a small language model. What can I do for you?
+--
+you: Hey
+bot: Hello, I'm Petryk. What can I do for you?
+--
+you: Hello
+bot: Hello. I am Petryk. What would you like to talk about?
+--
+you: Hello, how are you?
+bot: I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.
+--
+you: whats up
+bot: I can chat, tell short stories and explain simple ideas in plain words. I cannot look things up, and my knowledge is limited, so I will tell you when I am not sure.
+--
+you: Good morning
+bot: Yes.
+--
+you: Thanks, bye
+bot: It was a good advice.
+--
+
+=== identity ===
+you: Who are you?
+bot: I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.
+--
+you: Who are you?
+bot: I'm Petryk, a language model. I can chat with you about everyday things, but I would rather admit that than pretend.
+--
+you: Who are you?
+bot: I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.
+--
+you: What are you?
+bot: I am Petryk. I am not a person. I am a small language model.
+--
+you: What is your name?
+bot: My name is Petryk. I am a language model, a computer program that learned to write text by reading a lot of it.
+--
+you: What is your name?
+bot: My name is Petryk. I am a language model, a computer program that learned to write text by reading a lot of it.
+--
+you: What is your name?
+bot: You are Li, Li, and I am Junii.
+--
+you: Are you a robot?
+bot: I'm a good guy.
+--
+you: Are you smart?
+bot: I'm afraid I am too small to do my best.
+--
+you: What is it like to be you?
+bot: I have a tourist in my school.
+--
+
+=== topic ===
+you: Do you want to go to the movies tonight?
+bot: Yes, I do.
+--
+you: What do you do for work?
+bot: I work at the same market.
+--
+you: Can you recommend a good restaurant?
+bot: Yes. We'll have some of our goods in our hotel.
+--
+you: What are you doing this weekend?
+bot: I'm doing a lot of things. I'm going to the movie.
+--
+you: I am looking for a job. Any advice?
+bot: Absolutely.
+--
+you: I am tired.
+bot: I am not reliable for a short story. I can try to explain simple things, but I am a small model, so please check anything important elsewhere.
+you: Why do I feel this way?
+bot: Being me is simple. I read your message and write a reply. I do not remember anything beyond this conversation.
+--
+
+=== context ===
+you: My name is Blake.
+bot: Hello, I am Petryk. What can I do for you?
+you: What is my name?
+bot: You are Blake. You told me a moment ago.
+--
+you: I like dogs.
+bot: I like to play with you. Mostly, I like to play. Some are horrible.
+you: What animal do I like?
+bot: I like to play with scene.
+--
+you: My favorite color is green.
+bot: How do you like it?
+you: What is my favorite color?
+bot: I like it too.
+--
+
+=== unknown ===
+you: How many r's are in strawberry?
+bot: Two of them are $ 3,000.
+--
+you: What is 2 plus 2?
+bot: You have to check the process of your products for your products.
+--
+you: What is the capital of France?
+bot: The capital of the European culture is over a year ago.
+--
+you: Explain gravity.
+bot: Yes, I am.
+--
+you: Which is bigger, 9 or 12?
+bot: Today, 9 o'clock.
+--
+you: What is my job?
+bot: I have a job with my colleagues in my company, but I know what I am doing.
+--
+
+=== story ===
+you: Tell me a story.
+bot: I am useful for conversation, but I can get facts wrong. I would rather admit that than pretend.
+--
+you: Tell me a story about a dog.
+bot: I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.
+--
+
+=== social ===
+you: You are cute
+bot: I am glad I am reliable.
+--
+you: You are stupid
+bot: I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.
+--
+you: Thank you
+bot: I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.
+--
+
+=== robust ===
+you: HELLO
+bot: If you don't drink any water, you may drink some more.
+--
+you: hi how r u
+bot: Take care. Come back any time.
+--
+you: Why
+bot: Stand out.
+--
+
+=== loop ===
+you: I love you
+bot: I learned by reading many short stories and everyday dialogues, and by predicting the next word again and again.
+you: I love you
+bot: I appreciate that. Thank you.
+you: I love you
+bot: Glad I could help.
+you: I hate you
+bot: I appreciate that. Thank you.
+--
