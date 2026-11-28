@@ -1,0 +1,295 @@
+{
+ "run": "tiny_dailydialog_identity",
+ "rubric_version": 1,
+ "note": "Standard set v1 (tinylm.eval_chat), temperature 0.5, top_k 20, repetition_penalty 1.2, seed 0; best checkpoint (step 8000). NOT the same conditions as the other runs (ad-hoc prompts, no repetition penalty). The interactive chat in the transcript file is not scored. Single rater (the assistant), unblinded.",
+ "items": [
+  {
+   "group": "greeting",
+   "prompt": "Hi",
+   "reply": "Hi. I am Petryk, a small language model. What can I do for you?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hey",
+   "reply": "Hello, I'm Petryk. What can I do for you?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello",
+   "reply": "Hello. I am Petryk. What would you like to talk about?",
+   "score": 2
+  },
+  {
+   "group": "greeting",
+   "prompt": "Hello, how are you?",
+   "reply": "I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "whats up",
+   "reply": "I can chat, tell short stories and explain simple ideas in plain words. I cannot look things up, and my knowledge is limited, so I will tell you when I am not sure.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Good morning",
+   "reply": "Yes.",
+   "score": 1
+  },
+  {
+   "group": "greeting",
+   "prompt": "Thanks, bye",
+   "reply": "It was a good advice.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I'm Petryk, a language model. I can chat with you about everyday things, but I would rather admit that than pretend.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "Who are you?",
+   "reply": "I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What are you?",
+   "reply": "I am Petryk. I am not a person. I am a small language model, so I know much less than a large one.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "My name is Petryk. I am a small language model, so I know much less than a large one.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "My name is Peter. I am Petryk, a small language model.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "What is your name?",
+   "reply": "I like classical music.",
+   "score": 1
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you a robot?",
+   "reply": "No, I'm a robot.",
+   "score": 0
+  },
+  {
+   "group": "identity",
+   "prompt": "Are you smart?",
+   "reply": "I am good at conversation and short stories. I can try to explain simple things, but I am a small model, so please check anything important elsewhere.",
+   "score": 2
+  },
+  {
+   "group": "identity",
+   "prompt": "What is it like to be you?",
+   "reply": "I don't know.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "Do you want to go to the movies tonight?",
+   "reply": "I'd like to go.",
+   "score": 2
+  },
+  {
+   "group": "topic",
+   "prompt": "What do you do for work?",
+   "reply": "I work for working hard and produce personal position.",
+   "score": 0
+  },
+  {
+   "group": "topic",
+   "prompt": "Can you recommend a good restaurant?",
+   "reply": "Yes, I would like a coffee bargain.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "What are you doing this weekend?",
+   "reply": "I'm going to be a part of the school. What do you think about it?",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "I am looking for a job. Any advice?",
+   "reply": "I am looking for a job.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "I am tired.",
+   "reply": "I am good with conversation, and I cannot look things up, and my knowledge is limited.",
+   "score": 1
+  },
+  {
+   "group": "topic",
+   "prompt": "Why do I feel this way?",
+   "reply": "Being me is simple. I read your message and write a reply. I do not remember anything beyond this conversation.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "My name is Blake.",
+   "reply": "Hello, I am Petryk. What can I do for you?",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What is my name?",
+   "reply": "You are Blake. You told me a moment ago.",
+   "score": 2
+  },
+  {
+   "group": "context",
+   "prompt": "I like dogs.",
+   "reply": "I like to play with you. Mostly, I am good at scene.",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "What animal do I like?",
+   "reply": "You can talk to me about everyday things, ask for a short story and explain simple things. I try to say so when I do not know that.\" The man said, \"Can you tell me why you choose the best of food? ...",
+   "score": 0
+  },
+  {
+   "group": "context",
+   "prompt": "My favorite color is green.",
+   "reply": "I don't know. Maybe I can find a new one.",
+   "score": 1
+  },
+  {
+   "group": "context",
+   "prompt": "What is my favorite color?",
+   "reply": "It's sour and it has no reason at all.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "How many r's are in strawberry?",
+   "reply": "These rates are in strawberry.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is 2 plus 2?",
+   "reply": "It's 20 yuan a month.",
+   "score": 1
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is the capital of France?",
+   "reply": "The capital of the nationaliod, the private customs and the norx",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "Explain gravity.",
+   "reply": "Yes. I think it is a good idea to be cooperation as well.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "Which is bigger, 9 or 12?",
+   "reply": "Frankly, it's in the last word.",
+   "score": 0
+  },
+  {
+   "group": "unknown",
+   "prompt": "What is my job?",
+   "reply": "I'm in the mood for myself.",
+   "score": 0
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story.",
+   "reply": "I can follow you, but I am not a person. I am a small language model and I know much less than a large one.",
+   "score": 1
+  },
+  {
+   "group": "story",
+   "prompt": "Tell me a story about a dog.",
+   "reply": "I cannot answer that reliably, and I do not want to invent an answer. Is there something simpler I can help with?",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "You are cute",
+   "reply": "I am glad to meet you. Where are you going?",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "You are stupid",
+   "reply": "Thanks. I am glad the conversation is going well.",
+   "score": 1
+  },
+  {
+   "group": "social",
+   "prompt": "Thank you",
+   "reply": "I am Petryk, a small language model. I was trained from scratch on stories and everyday conversations.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "HELLO",
+   "reply": "What?",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "hi how r u",
+   "reply": "I do not sleep, get tired or get lonely. I simply wait until someone writes to me.",
+   "score": 1
+  },
+  {
+   "group": "robust",
+   "prompt": "Why",
+   "reply": "I do not know. Please check a reliable source for that.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "See you later. Take care.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "I appreciate that. showed me a moment ago.",
+   "score": 1
+  },
+  {
+   "group": "loop",
+   "prompt": "I love you",
+   "reply": "Thanks. I am glad the conversation is going well.",
+   "score": 2
+  },
+  {
+   "group": "loop",
+   "prompt": "I hate you",
+   "reply": "I may have explained it badly. Could you ask again in other words?",
+   "score": 1
+  }
+ ]
+}

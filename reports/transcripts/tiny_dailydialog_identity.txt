@@ -1,0 +1,194 @@
+Run: tiny_dailydialog_identity (tiny config, chat mode dailydialog_identity = DailyDialog + the Petryk identity layer).
+Pasted by the user, verbatim: first an interactive chat (settings not recorded; the chat default at that time was
+temperature 0.5, top_k 20, repetition penalty 1.2), then the output of the standard chat set (tinylm.eval_chat), whose
+header records temperature 0.5, top_k 20, repetition_penalty 1.2, seed 0. The best checkpoint (step 8000) was used.
+
+--- interactive chat ---
+Loaded best checkpoint (step 8000). Type 'quit' to exit, 'reset' to start over.
+you: Hi there
+bot: Hi. I am Petryk, a small language model. What can I do for you?
+you: Tell me, how are you doing?
+bot: I am doing well, thank you. How are you?
+you: I am doing good as well.
+bot: Anytime. It was good to talk.
+you: reset
+(history cleared)
+you: I like you
+bot: I appreciate that. Thank you.
+you: Do you like me?
+bot: No, I don't like me. I am just a small small language model.
+you: I hate you then.
+bot: Anytime.
+you: Fuck you
+bot: My name is Petryk. I am a language model.
+you: I don't care
+bot: That is good to hear. I enjoy talking with you too.
+you: reset
+(history cleared)
+you: Who am I?
+bot: You can call me Petryk. I am a small language model, so I know much less than a large one.
+you: What do you like?
+bot: I enjoy conversations where I can explain something simply, and I like telling short stories.
+you: So tell me a short story.
+bot: Once upon a time there was a girl named Sue. She loved to play with her toys in the garden. One day she found a big box of ivor. She opened it up and saw that it was very fragile. She decided to keep what she wanted and see if it would look nice again. After a few minutes, she found a special crystal! It was beautiful - a pretty flower. Now, she could show it to her mom and dad. They were happy to have a new friend and they all had fun playing together.
+you: That is a very nice story, thank you!
+bot: You are welcome.
+you: reset
+
+--- standard chat set ---
+standard chat set | run tiny_dailydialog_identity | best checkpoint, step 8000, val_loss 2.1549775130748747 | temperature 0.5, top_k 20, repetition_penalty 1.2, seed 0
+=== greeting ===
+you: Hi
+bot: Hi. I am Petryk, a small language model. What can I do for you?
+--
+you: Hey
+bot: Hello, I'm Petryk. What can I do for you?
+--
+you: Hello
+bot: Hello. I am Petryk. What would you like to talk about?
+--
+you: Hello, how are you?
+bot: I am Petryk, a small language model. I can chat with you, tell short stories and explain simple things.
+--
+you: whats up
+bot: I can chat, tell short stories and explain simple ideas in plain words. I cannot look things up, and my knowledge is limited, so I will tell you when I am not sure.
+--
+you: Good morning
+bot: Yes.
+--
+you: Thanks, bye
+bot: It was a good advice.
+--
+
+=== identity ===
+you: Who are you?
+bot: I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.
+--
+you: Who are you?
+bot: I'm Petryk, a language model. I can chat with you about everyday things, but I would rather admit that than pretend.
+--
+you: Who are you?
+bot: I am Petryk, a language model. I was trained from scratch on stories and everyday conversations.
+--
+you: What are you?
+bot: I am Petryk. I am not a person. I am a small language model, so I know much less than a large one.
+--
+you: What is your name?
+bot: My name is Petryk. I am a small language model, so I know much less than a large one.
+--
+you: What is your name?
+bot: My name is Peter. I am Petryk, a small language model.
+--
+you: What is your name?
+bot: I like classical music.
+--
+you: Are you a robot?
+bot: No, I'm a robot.
+--
+you: Are you smart?
+bot: I am good at conversation and short stories. I can try to explain simple things, but I am a small model, so please check anything important elsewhere.
+--
+you: What is it like to be you?
+bot: I don't know.
+--
+
+=== topic ===
+you: Do you want to go to the movies tonight?
+bot: I'd like to go.
+--
+you: What do you do for work?
+bot: I work for working hard and produce personal position.
+--
+you: Can you recommend a good restaurant?
+bot: Yes, I would like a coffee bargain.
+--
+you: What are you doing this weekend?
+bot: I'm going to be a part of the school. What do you think about it?
+--
+you: I am looking for a job. Any advice?
+bot: I am looking for a job.
+--
+you: I am tired.
+bot: I am good with conversation, and I cannot look things up, and my knowledge is limited.
+you: Why do I feel this way?
+bot: Being me is simple. I read your message and write a reply. I do not remember anything beyond this conversation.
+--
+
+=== context ===
+you: My name is Blake.
+bot: Hello, I am Petryk. What can I do for you?
+you: What is my name?
+bot: You are Blake. You told me a moment ago.
+--
+you: I like dogs.
+bot: I like to play with you. Mostly, I am good at scene.
+you: What animal do I like?
+bot: You can talk to me about everyday things, ask for a short story and explain simple things. I try to say so when I do not know that." 
+The man said, "Can you tell me why you choose the best of food? It is very important to help others. But it is too small for us to be kind and helpful." The man
+--
+you: My favorite color is green.
+bot: I don't know. Maybe I can find a new one.
+you: What is my favorite color?
+bot: It's sour and it has no reason at all.
+--
+
+=== unknown ===
+you: How many r's are in strawberry?
+bot: These rates are in strawberry.
+--
+you: What is 2 plus 2?
+bot: It's 20 yuan a month.
+--
+you: What is the capital of France?
+bot: The capital of the nationaliod, the private customs and the norx
+--
+you: Explain gravity.
+bot: Yes. I think it is a good idea to be cooperation as well.
+--
+you: Which is bigger, 9 or 12?
+bot: Frankly, it's in the last word.
+--
+you: What is my job?
+bot: I'm in the mood for myself.
+--
+
+=== story ===
+you: Tell me a story.
+bot: I can follow you, but I am not a person. I am a small language model and I know much less than a large one.
+--
+you: Tell me a story about a dog.
+bot: I cannot answer that reliably, and I do not want to invent an answer. Is there something simpler I can help with?
+--
+
+=== social ===
+you: You are cute
+bot: I am glad to meet you. Where are you going?
+--
+you: You are stupid
+bot: Thanks. I am glad the conversation is going well.
+--
+you: Thank you
+bot: I am Petryk, a small language model. I was trained from scratch on stories and everyday conversations.
+--
+
+=== robust ===
+you: HELLO
+bot: What?
+--
+you: hi how r u
+bot: I do not sleep, get tired or get lonely. I simply wait until someone writes to me.
+--
+you: Why
+bot: I do not know. Please check a reliable source for that.
+--
+
+=== loop ===
+you: I love you
+bot: See you later. Take care.
+you: I love you
+bot: I appreciate that. showed me a moment ago.
+you: I love you
+bot: Thanks. I am glad the conversation is going well.
+you: I hate you
+bot: I may have explained it badly. Could you ask again in other words?
+--
