@@ -125,9 +125,13 @@ Five chat modes (`prepare_data --chat_mode`):
   real parts: "tell me a story" replies are real short TinyStories, and questions the bot cannot answer are real
   user messages from everyday-conversations, always answered with an honest "I do not know that". Petryk is a
   calm, plain-spoken small language model that is honest about its limits. Validation uses held-out phrasings.
-* `dailydialog_identity`: real DailyDialog dialogues plus a small identity layer (default 1,500 conversations,
-  about 3% of chat tokens): the Petryk bank restricted to identity, limits, politeness, simple context, stories and
-  honest "I do not know" replies. The layer is mixed into training only; validation stays DailyDialog-only, so the
+* `dailydialog_identity`: real DailyDialog dialogues plus a small identity layer (default 1,000 conversations,
+  about 2% of chat tokens): the Petryk bank restricted to identity, limits, politeness, simple context, stories and
+  honest "I do not know" replies. The declined questions include short real search questions from NQ-Open
+  (`google-research-datasets/nq_open`, CC BY-SA 3.0; only the questions are used), and very simple arithmetic is
+  handled in a way a small model can learn: single-digit sums and differences and small comparisons are answered
+  correctly, bigger arithmetic is declined. The prompts of the standard chat set (for example "What is 2 plus 2?")
+  are kept out of training so that test stays fair. The layer is mixed into training only; validation stays DailyDialog-only, so the
   validation loss is directly comparable with a `dailydialog_only` run. `identity_examples.txt` in the data folder
   shows what was added. It is ordinary training data, not a rule: the model learns it like everything else.
 * `dailydialog`: only real, human-written dialogue, nothing authored. It combines DailyDialog (about 13k

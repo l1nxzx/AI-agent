@@ -41,7 +41,7 @@ def main(argv=None):
                         "dailydialog_identity: DailyDialog plus a small authored identity layer (Petryk)")
     p.add_argument("--persona_train", type=int, default=30_000, help="persona conversations for training")
     p.add_argument("--persona_val", type=int, default=600)
-    p.add_argument("--identity_train", type=int, default=1500,
+    p.add_argument("--identity_train", type=int, default=1000,
                    help="identity conversations mixed into DailyDialog in dailydialog_identity mode (about 2%% of chat tokens)")
     p.add_argument("--nq_questions", type=int, default=20_000,
                    help="short real factual questions (NQ-Open) that Petryk declines, in persona and identity modes")

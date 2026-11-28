@@ -570,7 +570,7 @@ DailyDialog-only in all three).
 1. Run the standard set (`tinylm.eval_chat`, default penalty 1.0) on the saved models of runs 1-5 and score them, so the
    comparisons use identical prompts and settings (run 6 is done). Run 2 is the most useful addition, then run 3 for the
    fair comparison with run 6.
-2. Fix the identity data's side effects: add SHORT real factual questions (for example from a question-answering
+2. (Implemented in the data code, not yet trained on Colab.) Fix the identity data's side effects: add SHORT real factual questions (for example from a question-answering
    dataset, after checking its format and license) to the questions Petryk declines, so "I do not know" covers
    "What is the capital of France?" and not only long everyday-conversations messages; add more story requests so they
    are not declined; and try a smaller identity share (for example 2%) to reduce leakage into unrelated prompts.
@@ -623,6 +623,23 @@ an answer from another question; and an everyday question ("Do you want to go to
 answered with a story, a sign the layer was too large at 11.7%. The data was fixed for the first problem (the
 confusable question was removed); the others are expected to improve with the longer Colab run and the smaller
 real share, and need checking there.
+
+### A.3 Datasets checked for short factual questions
+
+Checked on the Hugging Face Hub (existence, files, license and, for four of them, the real format) to find short
+factual questions the identity layer can teach Petryk to decline:
+
+| dataset | what it is | size | license (as listed) | verdict |
+|---|---|---|---|---|
+| `google-research-datasets/nq_open` | real Google search questions, short (mean 9.1 words), lowercase, no question mark | 87,925 train, 3,610 validation | CC BY-SA 3.0 | **used** (questions only, never the answers) |
+| `stanfordnlp/web_questions` | real short questions, with question mark | 3,778 train | unknown | too small, license unclear |
+| `allenai/sciq` | science questions (mean 12.9 words) with answers and support text | 11,679 train | CC BY-NC 3.0 | good candidate for the biology idea, non-commercial |
+| `allenai/ai2_arc`, `allenai/openbookqa` | school science multiple choice | thousands | CC BY-SA 4.0 / unknown | later, for science |
+| `mandarjoshi/trivia_qa` | trivia questions (long) | large | unknown | too long and specific |
+| `rajpurkar/squad` | questions written for a passage | large | CC BY-SA 4.0 | context-dependent, not standalone |
+
+The standard chat set's own prompts (for example "What is 2 plus 2?", "What is the capital of France?") are filtered
+out of the training questions, and the pairs they use are held out of the arithmetic data, so those tests stay fair.
 
 ## Appendix B. Adding a model to this report
 
