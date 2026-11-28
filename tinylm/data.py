@@ -38,6 +38,12 @@ DAILYDIALOG_REVISION = "refs/convert/parquet"
 DAILYDIALOG_TRAIN = "full/train/0000.parquet"
 DAILYDIALOG_VAL = "full/validation/0000.parquet"
 
+# NQ-Open: real, short factual questions that people typed into Google (about 88k). We use only the questions
+# (never the answers) as examples of what a very small model should decline to answer. License: CC BY-SA 3.0.
+NQ_REPO = "google-research-datasets/nq_open"
+NQ_TRAIN = "nq_open/train-00000-of-00001.parquet"
+NQ_VAL = "nq_open/validation-00000-of-00001.parquet"
+
 ROLE_TO_MARKER = {"user": USER, "assistant": BOT}
 BIN_FILES = ["stories_train.bin", "stories_val.bin", "chat_train.bin", "chat_val.bin"]
 
@@ -45,7 +51,7 @@ BIN_FILES = ["stories_train.bin", "stories_val.bin", "chat_train.bin", "chat_val
 # ---------------------------------------------------------------------------------------------
 # Dataset checks and download
 # ---------------------------------------------------------------------------------------------
-def check_and_locate_files(smoke=False, num_story_shards=1, dailydialog=False):
+def check_and_locate_files(smoke=False, num_story_shards=1, dailydialog=False, nq=False):
     """Ask the Hub which files exist. Returns the file names we will download. Raises with a clear
     message if a dataset or an expected file is missing."""
     from huggingface_hub import HfApi
@@ -76,6 +82,15 @@ def check_and_locate_files(smoke=False, num_story_shards=1, dailydialog=False):
                 raise RuntimeError(f"{DAILYDIALOG_REPO}@{DAILYDIALOG_REVISION}: expected file {f} is missing; found {sorted(dd_files)}")
         out["dd_train"], out["dd_val"] = DAILYDIALOG_TRAIN, DAILYDIALOG_VAL
         log.info(f"{DAILYDIALOG_REPO}: found train and validation parquet files")
+    if nq:
+        if not api.repo_exists(NQ_REPO, repo_type="dataset"):
+            raise RuntimeError(f"dataset {NQ_REPO} does not exist on the Hugging Face Hub")
+        nq_files = set(api.list_repo_files(NQ_REPO, repo_type="dataset"))
+        for f in (NQ_TRAIN, NQ_VAL):
+            if f not in nq_files:
+                raise RuntimeError(f"{NQ_REPO}: expected file {f} is missing; found {sorted(nq_files)[:10]}")
+        out["nq_train"], out["nq_val"] = NQ_TRAIN, NQ_VAL
+        log.info(f"{NQ_REPO}: found train and validation parquet files")
     out["chat_train"] = CHAT_TRAIN_FILE
     out["chat_test"] = CHAT_TEST_FILE
     log.info(f"{TINYSTORIES_REPO}: found {len(train_shards)} train shard(s), {len(valid_shards)} validation file(s)")
@@ -141,6 +156,20 @@ def read_conversations(parquet_path):
     log.info(f"{os.path.basename(parquet_path)}: {len(convs)} conversations, "
              f"{unknown_roles} messages with other roles skipped, {trailing_user} trailing user turns dropped")
     return convs
+
+
+def read_nq_open_questions(parquet_path, limit=None):
+    """Questions only (the 'question' column) from NQ-Open: short real search queries such as
+    'who sings the song ...'. Verifies the schema first."""
+    import pyarrow.parquet as pq
+
+    table = pq.read_table(parquet_path, columns=["question"]) if "question" in pq.ParquetFile(parquet_path).schema_arrow.names else None
+    if table is None:
+        raise RuntimeError(f"{parquet_path}: expected a 'question' column")
+    qs = [q.strip() for q in table.column("question").to_pylist() if q and q.strip()]
+    qs = qs[:limit] if limit else qs
+    get_logger().info(f"{os.path.basename(parquet_path)}: {len(qs)} short factual questions (mean {sum(len(q.split()) for q in qs) / len(qs):.1f} words)")
+    return qs
 
 
 def clean_dailydialog(text):

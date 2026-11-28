@@ -17,8 +17,9 @@ import os
 os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
 
 from .bpe import BPETokenizer
-from .data import (DAILYDIALOG_REPO, DAILYDIALOG_REVISION, SMOLTALK_REPO, TINYSTORIES_REPO, check_and_locate_files,
-                   download, read_conversations, read_dailydialog, read_story_texts, write_dataset)
+from .data import (DAILYDIALOG_REPO, DAILYDIALOG_REVISION, NQ_REPO, SMOLTALK_REPO, TINYSTORIES_REPO,
+                   check_and_locate_files, download, read_conversations, read_dailydialog, read_nq_open_questions,
+                   read_story_texts, write_dataset)
 from .logutil import setup_logging
 from .persona import IDENTITY_INTENTS, PersonaBuilder, pick_unknown_user_turns
 
@@ -42,6 +43,8 @@ def main(argv=None):
     p.add_argument("--persona_val", type=int, default=600)
     p.add_argument("--identity_train", type=int, default=1500,
                    help="identity conversations mixed into DailyDialog in dailydialog_identity mode (about 2%% of chat tokens)")
+    p.add_argument("--nq_questions", type=int, default=20_000,
+                   help="short real factual questions (NQ-Open) that Petryk declines, in persona and identity modes")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--smoke", action="store_true", help="use only the small TinyStories validation file, split into train/val (for quick tests)")
     p.add_argument("--force", action="store_true")
@@ -61,7 +64,8 @@ def main(argv=None):
 
     cache = args.cache_dir or os.path.join(args.data_dir, "hf_cache")
     files = check_and_locate_files(smoke=args.smoke, num_story_shards=args.story_shards,
-                                   dailydialog=args.chat_mode in ("dailydialog", "dailydialog_only", "dailydialog_identity"))
+                                   dailydialog=args.chat_mode in ("dailydialog", "dailydialog_only", "dailydialog_identity"),
+                                   nq=args.chat_mode in ("persona", "dailydialog_identity"))
 
     chat_train = read_conversations(download(SMOLTALK_REPO, files["chat_train"], cache))
     chat_val = read_conversations(download(SMOLTALK_REPO, files["chat_test"], cache))
@@ -80,6 +84,10 @@ def main(argv=None):
         story_val = valid_texts[:args.max_val_stories]
     log.info(f"stories: {len(story_train)} train, {len(story_val)} val; conversations: {len(chat_train)} train, {len(chat_val)} val")
 
+    short_questions = None
+    if args.chat_mode in ("persona", "dailydialog_identity"):
+        short_questions = {"train": read_nq_open_questions(download(NQ_REPO, files["nq_train"], cache), limit=args.nq_questions),
+                           "val": read_nq_open_questions(download(NQ_REPO, files["nq_val"], cache), limit=1000)}
     identity_convs = []
     if args.chat_mode in ("dailydialog", "dailydialog_only", "dailydialog_identity"):
         log.info(f"chat_mode={args.chat_mode}: chat data is entirely real, human-written dialogue (no authored replies)")
@@ -94,7 +102,7 @@ def main(argv=None):
                     stories={"train": story_train, "val": story_val},
                     unknown_user_turns={"train": pick_unknown_user_turns(read_conversations(download(SMOLTALK_REPO, files["chat_train"], cache))),
                                         "val": pick_unknown_user_turns(read_conversations(download(SMOLTALK_REPO, files["chat_test"], cache)))},
-                    intents=IDENTITY_INTENTS)
+                    intents=IDENTITY_INTENTS, short_questions=short_questions)
                 identity_convs = builder.build(args.identity_train, "train", args.seed, log)
                 chat_train = dd_train + identity_convs
         else:
@@ -107,7 +115,8 @@ def main(argv=None):
                  "everyday-conversations data only supplies the user-side questions the bot answers with an honest 'I am small'.")
         builder = PersonaBuilder(
             stories={"train": story_train, "val": story_val},
-            unknown_user_turns={"train": pick_unknown_user_turns(chat_train), "val": pick_unknown_user_turns(chat_val)})
+            unknown_user_turns={"train": pick_unknown_user_turns(chat_train), "val": pick_unknown_user_turns(chat_val)},
+            short_questions=short_questions)
         chat_train = builder.build(args.persona_train, "train", args.seed, log)
         chat_val = builder.build(args.persona_val, "val", args.seed, log)
         for conv in chat_train[:5]:

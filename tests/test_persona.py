@@ -116,3 +116,93 @@ def test_replies_match_their_questions_for_paired_intents(builder):
             for q, r in pairs.items():
                 if bot == r:
                     assert user.lower().rstrip("?.!").replace("'", "") == q.lower().rstrip("?.!").replace("'", "")
+
+
+# ---- arithmetic, short factual questions and the evaluation guard -----------------------------------
+import re as _re
+
+SHORT = {"train": [f"who wrote the song number {i}" for i in range(40)] + ["what is the capital of france"],
+         "val": [f"when did the show number {i} start" for i in range(10)]}
+
+
+@pytest.fixture(scope="module")
+def full_builder():
+    return PersonaBuilder(STORIES, UNKNOWN, short_questions=SHORT)
+
+
+def _numbers(text):
+    words = persona.NUM_WORDS
+    return [int(t) if t.isdigit() else words.index(t) for t in _re.findall(r"\b(\d+|" + "|".join(words) + r")\b", text.lower())]
+
+
+def test_simple_arithmetic_answers_are_correct(full_builder):
+    rng = random.Random(0)
+    checked = 0
+    for split in ("train", "val"):
+        for _ in range(600):
+            user, bot = full_builder.arithmetic(rng, split)
+            nums = _numbers(user)
+            low = user.lower()
+            if len(nums) == 2 and nums[0] < 10 and nums[1] < 10 and ("plus" in low or "+" in low or "add" in low):
+                assert _numbers(bot)[-1] == nums[0] + nums[1], (user, bot)
+                checked += 1
+            if len(nums) == 2 and ("minus" in low or " - " in low):
+                if nums[0] < 10 and nums[1] < 10 and "calculat" not in bot:
+                    assert _numbers(bot)[-1] == nums[0] - nums[1], (user, bot)
+                    checked += 1
+            if "bigger" in low and len(nums) == 2 and "calculat" not in bot:
+                assert _numbers(bot)[0] == max(nums), (user, bot)
+                checked += 1
+    assert checked > 100
+
+
+def test_big_arithmetic_is_declined(full_builder):
+    rng = random.Random(1)
+    declined = 0
+    for _ in range(400):
+        user, bot = full_builder.arithmetic(rng, "train")
+        nums = _numbers(user)
+        if any(n >= 10 for n in nums) and ("times" in user or "divided" in user or "*" in user or "Multiply" in user):
+            assert "calculator" in bot, (user, bot)
+            declined += 1
+    assert declined > 10
+
+
+def test_addition_pairs_never_shared_between_train_and_validation(full_builder):
+    """Which (a, b) pair goes to validation is decided by the pair, so validation sums are never seen in training."""
+    rng = random.Random(2)
+    seen = {"train": set(), "val": set()}
+    for split in ("train", "val"):
+        for _ in range(3000):
+            user, bot = full_builder.arithmetic(rng, split)
+            low = user.lower()
+            nums = _numbers(user)
+            if len(nums) == 2 and nums[0] < 10 and nums[1] < 10 and "calculator" not in bot and ("plus" in low or "+" in low or " and " in low):
+                seen[split].add(tuple(nums))
+    assert len(seen["train"]) > 20 and len(seen["val"]) > 5
+    assert not (seen["train"] & seen["val"])
+
+
+def test_two_plus_two_and_nine_or_twelve_never_in_training(full_builder):
+    rng = random.Random(3)
+    for split in ("train", "val"):
+        for _ in range(3000):
+            user, _bot = full_builder.arithmetic(rng, split)
+            nums = _numbers(user)
+            low = user.lower()
+            assert not (sorted(nums) == [2, 2] and ("plus" in low or "+" in low or "add" in low)), user
+            assert not (sorted(nums) == [9, 12] and "bigger" in low), user
+
+
+def test_short_factual_questions_used_and_eval_prompts_filtered(full_builder):
+    rng = random.Random(4)
+    texts = [full_builder.exchange(rng, "train", "unknown") for _ in range(400)]
+    users = [u for u, _ in texts]
+    assert any(u.lower().startswith("who wrote the song") for u in users)
+    assert not any("capital of france" in u.lower() for u in users)          # a standard-set prompt: filtered out
+    assert any(b in persona.FACT_UNKNOWN_BOT for _, b in texts)
+    assert any(u.endswith("?") for u in users) and any(not u.endswith("?") for u in users)
+
+
+def test_story_phrasings_grew():
+    assert len(persona.STORY_USER) >= 12

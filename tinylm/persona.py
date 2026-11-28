@@ -212,7 +212,9 @@ INTENTS = {
 }
 
 STORY_USER = ["Tell me a story", "Tell me a story please", "Can you tell me a story?", "Story time",
-              "I want a story", "Tell me a tale", "Do you know a story?", "Please tell me a short story"]
+              "I want a story", "Tell me a tale", "Do you know a story?", "Please tell me a short story",
+              "Make up a story", "Tell me a bedtime story", "Can you make a story?", "I would like to hear a story",
+              "Any story", "Write a short story", "Tell me something, a story", "Could you tell a short story?"]
 STORY_TOPIC_USER = ["Tell me a story about {np}", "Can you tell me a story about {np}?",
                     "I want a story about {np}", "Tell me about {np} in a story", "Story about {np} please"]
 STORY_TOPICS = {"dog": "a dog", "cat": "a cat", "bird": "a bird", "rabbit": "a rabbit", "bear": "a bear",
@@ -228,6 +230,35 @@ UNKNOWN_BOT = [
     "I am not sure. My knowledge is limited, and a wrong answer would not help you.",
     "I cannot answer that. I can chat, tell stories and explain simple things, but that question needs a better source.",
     "I do not know. Please check a reliable source for that."]
+
+# Replies to short factual questions (real search queries from NQ-Open): honest, no guessing.
+FACT_UNKNOWN_BOT = [
+    "I do not know that. My knowledge is very limited, and I would rather say so than guess. A search engine or a book will give you a reliable answer.",
+    "I cannot answer that reliably. I am a small language model and I do not have facts I can trust. Please check a reliable source.",
+    "I am not able to answer factual questions like that. I would only be guessing.",
+    "That is a factual question, and I do not know the answer. I would rather tell you that than make something up.",
+    "I do not know. I have no internet access and my memory for facts is poor. A search engine will do much better.",
+    "I cannot tell you that with any confidence. Please look it up in a reliable source."]
+
+# Very simple arithmetic is answered (a small model can memorize single-digit sums); anything bigger is declined.
+NUM_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+             "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
+ADD_USER = ["What is {a} plus {b}?", "What is {a} + {b}?", "{a} plus {b}", "How much is {a} plus {b}?",
+            "Calculate {a} + {b}", "Add {a} and {b}", "what's {a} plus {b}", "{a} + {b} = ?"]
+SUB_USER = ["What is {a} minus {b}?", "What is {a} - {b}?", "{a} minus {b}", "How much is {a} minus {b}?",
+            "Subtract {b} from {a}", "what's {a} minus {b}", "{a} - {b} = ?"]
+CMP_USER = ["Which is bigger, {a} or {b}?", "Which is larger, {a} or {b}?", "Which number is bigger, {a} or {b}?",
+            "What is bigger, {a} or {b}?", "Is {a} or {b} bigger?"]
+CMP_SMALL_USER = ["Which is smaller, {a} or {b}?", "Which number is smaller, {a} or {b}?", "What is smaller, {a} or {b}?",
+                  "Is {a} or {b} smaller?", "Which is less, {a} or {b}?"]
+HARD_ARITH_USER = ["What is {a} plus {b}?", "What is {a} times {b}?", "What is {a} * {b}?", "Multiply {a} by {b}",
+                   "What is {a} divided by {b}?", "How much is {a} minus {b}?", "What is {a} + {b}?"]
+HARD_ARITH_BOT = [
+    "I am only reliable with very small sums. For bigger arithmetic, please use a calculator.",
+    "I would only be guessing. A calculator will give you the right answer.",
+    "That is too big for me to calculate reliably. Please use a calculator."]
+# Pairs kept OUT of training on purpose, because the standard chat set asks them: this keeps that test fair.
+EVAL_HELD_OUT = {("add", 2, 2), ("cmp", 9, 12), ("cmp", 12, 9)}
 
 NAMES = ["Anna", "Ben", "Carla", "Dan", "Eva", "Finn", "Grace", "Hugo", "Ivy", "Jack", "Kim", "Leo",
          "Mia", "Noah", "Olivia", "Pablo", "Quinn", "Rosa", "Sam", "Tina", "Uma", "Victor", "Will",
@@ -257,7 +288,7 @@ GREETING_WORDS = re.compile(r"^(hi|hello|hey|good morning|good evening|howdy|yo)
 
 # Intents used by the `dailydialog_identity` mode: who Petryk is, its limits, politeness, simple context, stories.
 # Mood, joke and chit-chat intents are left to the real dialogue data.
-IDENTITY_INTENTS = ["greeting", "address", "how_are_you", "who_are_you", "name_origin", "what_can_you_do", "smart",
+IDENTITY_INTENTS = ["arithmetic", "greeting", "address", "how_are_you", "who_are_you", "name_origin", "what_can_you_do", "smart",
                     "reliability", "feelings", "compliment", "insult", "thanks", "goodbye", "likes", "home", "made_by",
                     "trained_how", "age", "memory", "abilities", "big_help", "confused", "story", "unknown"]
 
@@ -302,12 +333,35 @@ def clean_story(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _norm(text):
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", "", text.lower())).strip()
+
+
+def eval_prompt_set():
+    """Normalized prompts of the standard chat set, so training data never contains the questions the tests ask."""
+    from .eval_chat import STANDARD_SET
+    return {_norm(u) for _, turns, _ in STANDARD_SET for u in turns}
+
+
+def format_short_question(rng, q):
+    """NQ-Open questions are lowercase with no question mark; real users type both ways."""
+    q = q.strip()
+    if rng.random() < 0.7:
+        q = q[:1].upper() + q[1:]
+    if rng.random() < 0.75 and not q.endswith("?"):
+        q += "?"
+    return q
+
+
 class PersonaBuilder:
-    def __init__(self, stories, unknown_user_turns, max_story_chars=480, intents=None):
+    def __init__(self, stories, unknown_user_turns, max_story_chars=480, intents=None, short_questions=None):
         """stories: {"train": [...], "val": [...]} full story texts. unknown_user_turns: {"train": [...], "val": [...]}
         real user messages that the bot cannot answer. intents: names to use (default: all of INTENTS plus
         'story' and 'unknown'); IDENTITY_INTENTS gives the smaller identity-only set."""
         validate_bank()
+        self._eval_prompts = eval_prompt_set()
+        # short real factual questions (NQ-Open), minus anything the standard chat set asks
+        self.short = {k: [q for q in v if _norm(q) not in self._eval_prompts] for k, v in (short_questions or {}).items()}
         self.unknown = {k: list(v) for k, v in unknown_user_turns.items()}
         self.story_index = {}
         for split, texts in stories.items():
@@ -326,7 +380,7 @@ class PersonaBuilder:
         for name, d in INTENTS.items():
             names.append(name)
             weights.append(d["weight"])
-        for name, w in (("story", 4), ("unknown", 5)):
+        for name, w in (("story", 5), ("unknown", 4), ("arithmetic", 3)):
             names.append(name)
             weights.append(w)
         if intents is not None:
@@ -355,8 +409,57 @@ class PersonaBuilder:
                 story = rng.choice(short)
             return user, rng.choice(STORY_INTRO) + story
         if name == "unknown":
+            pool = self.short.get(split)
+            if pool and rng.random() < 0.65:
+                return format_short_question(rng, rng.choice(pool)), rng.choice(FACT_UNKNOWN_BOT)
             return rng.choice(self.unknown[split]), rng.choice(UNKNOWN_BOT)
+        if name == "arithmetic":
+            return self.arithmetic(rng, split)
         raise KeyError(name)
+
+    def arithmetic(self, rng, split):
+        """Single-digit sums and differences and small comparisons are answered correctly; bigger arithmetic is
+        declined. Which number pairs go to validation is decided by the pair, so validation pairs are never seen."""
+        def in_split(a, b):
+            is_val = (a + 2 * b) % HOLDOUT_EVERY == HOLDOUT_EVERY - 1
+            return is_val == (split == "val")
+
+        def num(n, words):
+            return NUM_WORDS[n] if words else str(n)
+
+        for _ in range(200):
+            kind = rng.choices(["add", "sub", "cmp", "cmp_small", "hard"], [0.3, 0.2, 0.15, 0.1, 0.25])[0]
+            words = rng.random() < 0.2
+            if kind == "hard":
+                a, b = rng.randint(10, 99), rng.randint(2, 99)
+                user = rng.choice(split_phrasings(HARD_ARITH_USER, split)).format(a=a, b=b)
+                return user, rng.choice(HARD_ARITH_BOT)
+            a, b = (rng.randint(0, 9), rng.randint(0, 9)) if kind in ("add", "sub") else (rng.randint(0, 20), rng.randint(0, 20))
+            if kind == "sub" and a < b:
+                a, b = b, a
+            if kind in ("cmp", "cmp_small") and a == b:
+                continue
+            if not in_split(a, b) or (kind, a, b) in EVAL_HELD_OUT:
+                continue
+            if kind == "add":
+                user = rng.choice(split_phrasings(ADD_USER, split)).format(a=num(a, words), b=num(b, words))
+                c = num(a + b, words)
+                bot = rng.choice(["{a} plus {b} is {c}.", "{c}.", "It is {c}.", "The answer is {c}.", "{a} plus {b} equals {c}."])
+            elif kind == "sub":
+                user = rng.choice(split_phrasings(SUB_USER, split)).format(a=num(a, words), b=num(b, words))
+                c = num(a - b, words)
+                bot = rng.choice(["{a} minus {b} is {c}.", "{c}.", "It is {c}.", "The answer is {c}.", "{a} minus {b} equals {c}."])
+            else:
+                pool = CMP_USER if kind == "cmp" else CMP_SMALL_USER
+                user = rng.choice(split_phrasings(pool, split)).format(a=num(a, words), b=num(b, words))
+                c = num(max(a, b) if kind == "cmp" else min(a, b), words)
+                bot = rng.choice(["{c} is bigger.", "{c}.", "{c} is the bigger number."] if kind == "cmp"
+                                 else ["{c} is smaller.", "{c}.", "{c} is the smaller number."])
+            if _norm(user) in self._eval_prompts:
+                continue
+            reply = bot.format(a=num(a, words), b=num(b, words), c=c)
+            return user, reply[:1].upper() + reply[1:]
+        raise RuntimeError("could not draw an arithmetic exchange")
 
     def name_conversation(self, rng, split):
         n = make_name(rng)
